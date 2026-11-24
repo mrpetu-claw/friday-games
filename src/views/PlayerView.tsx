@@ -25,7 +25,22 @@ export default function PlayerView({ code }: { code: string }) {
   if (!data) {
     return (
       <Shell wide>
-        {error ? <ErrorNote message={error.message} /> : <Loading label="Opening the case file…" />}
+        {error?.code === 'not_found' ? (
+          <section className="card narrow">
+            <h1>Game not found</h1>
+            <p>
+              There’s no game with code <strong>{code}</strong>. It may have finished and been cleaned up. Ask the host for
+              the current link.
+            </p>
+            <a className="btn btn-primary" href="#/">
+              Go to the home page
+            </a>
+          </section>
+        ) : error ? (
+          <ErrorNote message={error.message} />
+        ) : (
+          <Loading label="Opening the case file…" />
+        )}
       </Shell>
     )
   }

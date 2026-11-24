@@ -23,6 +23,7 @@ function write(key: string, value: string | null) {
 export const hostCredential = {
   get: (code: string) => read(`host:${code}`),
   set: (code: string, cred: string) => write(`host:${code}`, cred),
+  forget: (code: string) => write(`host:${code}`, null),
 }
 
 export const playerToken = {

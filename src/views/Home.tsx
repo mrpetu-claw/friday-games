@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ErrorNote, Shell } from '../components/common'
 import { GAMES } from '../games/registry'
-import { createSession, GameError } from '../lib/api'
+import { createSession, GameError, getPublicState } from '../lib/api'
 import { normaliseCode } from '../lib/game'
 import { go } from '../lib/router'
 import { hostCredential, recentHostedCodes } from '../lib/storage'
@@ -15,7 +15,28 @@ export default function Home() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [code, setCode] = useState('')
-  const recent = recentHostedCodes()
+  const [recent, setRecent] = useState<string[]>([])
+
+  // Show only hosted games that still exist and are not finished
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      recentHostedCodes().map(async (c) => {
+        try {
+          const st = await getPublicState(c)
+          return st.session.status === 'ended' ? null : c
+        } catch (e) {
+          if (e instanceof GameError && e.code === 'not_found') hostCredential.forget(c)
+          return null
+        }
+      }),
+    ).then((codes) => {
+      if (!cancelled) setRecent(codes.filter((c): c is string => Boolean(c)))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function create() {
     setBusy(true)
@@ -113,7 +134,7 @@ export default function Home() {
           )}
           {recent.length > 0 && (
             <p className="small muted recent">
-              Games you host in this browser:{' '}
+              Your open games:{' '}
               {recent.map((c) => (
                 <a key={c} href={`#/host/${c}`} className="code-link">
                   {c}

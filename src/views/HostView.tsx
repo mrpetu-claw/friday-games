@@ -54,6 +54,23 @@ function HostConsole({ code, api }: { code: string; api: HostApi }) {
   }
 
   if (!data) {
+    if (error?.code === 'not_authorized') {
+      // The game was deleted or expired (old games are cleaned up after 7 days)
+      hostCredential.forget(code)
+      return (
+        <Shell>
+          <section className="card narrow">
+            <h1>This game no longer exists</h1>
+            <p>
+              Game <strong>{code}</strong> has been closed and cleaned up. Start a new one from the home page.
+            </p>
+            <a className="btn btn-primary" href="#/">
+              Go to the home page
+            </a>
+          </section>
+        </Shell>
+      )
+    }
     return <Shell wide>{error ? <ErrorNote message={error.message} /> : <Loading label="Opening host console…" />}</Shell>
   }
 
