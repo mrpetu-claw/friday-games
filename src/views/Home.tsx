@@ -4,17 +4,56 @@ import { GAMES } from '../games/registry'
 import { createSession, GameError, getPublicState } from '../lib/api'
 import { normaliseCode } from '../lib/game'
 import { go } from '../lib/router'
-import { hostCredential, recentHostedCodes } from '../lib/storage'
+import { hostCredential, playerToken, recentHostedCodes } from '../lib/storage'
 import type { Mode } from '../lib/types'
 
-export default function Home() {
-  const [creating, setCreating] = useState(false)
+/** #/ — what players get: just enter the code. */
+export function PlayerHome() {
+  const [code, setCode] = useState('')
+  return (
+    <Shell>
+      <section className="hero">
+        <h1>Friday Games</h1>
+        <p className="lead">Enter the code your host shared in the Teams chat.</p>
+      </section>
+      <section className="card narrow">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (code.length !== 6) return
+            // Already joined this game from this browser? Go straight back in.
+            go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
+          }}
+        >
+          <label className="field">
+            Game code
+            <input
+              className="code-input"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              autoFocus
+              placeholder="e.g. K7MQ2D"
+              value={code}
+              onChange={(e) => setCode(normaliseCode(e.target.value))}
+            />
+          </label>
+          <button type="submit" className="btn btn-primary" disabled={code.length !== 6}>
+            Join game
+          </button>
+        </form>
+      </section>
+    </Shell>
+  )
+}
+
+/** #/host — the organiser's page: create a game, reopen open games, edit stories. */
+export function HostHome() {
   const [game, setGame] = useState('mystery_stories')
   const [mode, setMode] = useState<Mode>('competitive')
   const [target, setTarget] = useState(60)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [code, setCode] = useState('')
   const [recent, setRecent] = useState<string[]>([])
 
   // Show only hosted games that still exist and are not finished
@@ -53,126 +92,91 @@ export default function Home() {
   }
 
   return (
-    <Shell>
+    <Shell home="#/host">
       <section className="hero">
-        <h1>Friday Games</h1>
-        <p className="lead">Team mysteries for your Teams call. No sign-up needed.</p>
+        <h1>Host a game</h1>
+        <p className="lead">You run the game, answer questions and award clues.</p>
       </section>
 
       <div className="grid-2">
         <section className="card">
-          <h2>Host a game</h2>
-          {!creating ? (
-            <>
-              <p className="muted">You run the game, answer questions and award clues.</p>
-              <button className="btn btn-primary" onClick={() => setCreating(true)}>
-                Create game
-              </button>
-            </>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                void create()
-              }}
-            >
-              <fieldset>
-                <legend>Game</legend>
-                {GAMES.map((g) => (
-                  <label key={g.id} className={`option ${!g.available ? 'disabled' : ''}`}>
-                    <input
-                      type="radio"
-                      name="game"
-                      value={g.id}
-                      checked={game === g.id}
-                      disabled={!g.available}
-                      onChange={() => setGame(g.id)}
-                    />
-                    <span>
-                      <strong>{g.name}</strong> <span className="muted small">{g.tagline}</span>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>Mode</legend>
-                <label className="option">
-                  <input type="radio" name="mode" checked={mode === 'competitive'} onChange={() => setMode('competitive')} />
-                  <span>
-                    <strong>Competitive</strong> <span className="muted small">Individual scores, winner at the end</span>
-                  </span>
-                </label>
-                <label className="option">
-                  <input type="radio" name="mode" checked={mode === 'cooperative'} onChange={() => setMode('cooperative')} />
-                  <span>
-                    <strong>Cooperative</strong> <span className="muted small">One team score against a goal</span>
-                  </span>
-                </label>
-                {mode === 'cooperative' && (
-                  <label className="field">
-                    Team goal (points)
-                    <input
-                      type="number"
-                      min={5}
-                      max={500}
-                      value={target}
-                      onChange={(e) => setTarget(Number(e.target.value))}
-                    />
-                  </label>
-                )}
-              </fieldset>
-              <ErrorNote message={error} />
-              <div className="row">
-                <button type="submit" className="btn btn-primary" disabled={busy}>
-                  {busy ? 'Creating…' : 'Create game'}
-                </button>
-                <button type="button" className="btn" onClick={() => setCreating(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-          {recent.length > 0 && (
-            <p className="small muted recent">
-              Your open games:{' '}
-              {recent.map((c) => (
-                <a key={c} href={`#/host/${c}`} className="code-link">
-                  {c}
-                </a>
-              ))}
-            </p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Join a game</h2>
+          <h2>New game</h2>
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              if (code.length === 6) go(`/join/${code}`)
+              void create()
             }}
           >
-            <label className="field">
-              Game code
-              <input
-                className="code-input"
-                inputMode="text"
-                autoCapitalize="characters"
-                autoComplete="off"
-                placeholder="e.g. K7MQ2D"
-                value={code}
-                onChange={(e) => setCode(normaliseCode(e.target.value))}
-              />
-            </label>
-            <button type="submit" className="btn btn-primary" disabled={code.length !== 6}>
-              Continue
+            <fieldset>
+              <legend>Game</legend>
+              {GAMES.map((g) => (
+                <label key={g.id} className={`option ${!g.available ? 'disabled' : ''}`}>
+                  <input
+                    type="radio"
+                    name="game"
+                    value={g.id}
+                    checked={game === g.id}
+                    disabled={!g.available}
+                    onChange={() => setGame(g.id)}
+                  />
+                  <span>
+                    <strong>{g.name}</strong> <span className="muted small">{g.tagline}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            <fieldset>
+              <legend>Mode</legend>
+              <label className="option">
+                <input type="radio" name="mode" checked={mode === 'competitive'} onChange={() => setMode('competitive')} />
+                <span>
+                  <strong>Competitive</strong> <span className="muted small">Individual scores, winner at the end</span>
+                </span>
+              </label>
+              <label className="option">
+                <input type="radio" name="mode" checked={mode === 'cooperative'} onChange={() => setMode('cooperative')} />
+                <span>
+                  <strong>Cooperative</strong> <span className="muted small">One team score against a goal</span>
+                </span>
+              </label>
+              {mode === 'cooperative' && (
+                <label className="field">
+                  Team goal (points)
+                  <input type="number" min={5} max={500} value={target} onChange={(e) => setTarget(Number(e.target.value))} />
+                </label>
+              )}
+            </fieldset>
+            <ErrorNote message={error} />
+            <button type="submit" className="btn btn-primary" disabled={busy}>
+              {busy ? 'Creating…' : 'Create game'}
             </button>
           </form>
         </section>
+
+        <div>
+          <section className="card">
+            <h2>Your open games</h2>
+            {recent.length === 0 ? (
+              <p className="muted small">None right now. Games you create in this browser appear here until they end.</p>
+            ) : (
+              <p>
+                {recent.map((c) => (
+                  <a key={c} href={`#/host/${c}`} className="btn code-link">
+                    {c}
+                  </a>
+                ))}
+              </p>
+            )}
+          </section>
+          <section className="card">
+            <h2>Stories</h2>
+            <p className="muted small">Add or edit mysteries, clues and pictures.</p>
+            <a className="btn" href="#/admin">
+              Open Story Editor
+            </a>
+          </section>
+        </div>
       </div>
-      <p className="center small muted">
-        <a href="#/admin">Manage stories</a>
-      </p>
     </Shell>
   )
 }

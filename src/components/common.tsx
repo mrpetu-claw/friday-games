@@ -81,11 +81,11 @@ export function Scoreboard({
   )
 }
 
-export function Shell({ children, wide }: { children: ReactNode; wide?: boolean }) {
+export function Shell({ children, wide, home = '#/' }: { children: ReactNode; wide?: boolean; home?: string }) {
   return (
     <div className={`shell ${wide ? 'shell-wide' : ''}`}>
       <header className="topbar">
-        <a href="#/" className="brand">
+        <a href={home} className="brand">
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={28} height={28} /> Friday Games
         </a>
       </header>

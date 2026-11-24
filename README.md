@@ -8,7 +8,7 @@ A web game for Microsoft Teams calls. The host runs short original mysteries. Pl
 
 ## How a game works
 
-1. The host opens the site, clicks **Create game** and picks *Competitive* or *Cooperative*.
+1. The host opens the **host page** (`…/friday-games/#/host`), clicks **Create game** and picks *Competitive* or *Cooperative*. Players use the plain site address (`…/friday-games/`), which only asks for the game code.
 2. The host shares the 6-character **game code** in the Teams chat (or clicks **Copy join link**).
 3. Players open the link, type their name, and they appear on the host's screen right away.
    People who can't open the site can be added by the host by name.
@@ -80,7 +80,7 @@ docs/DECISIONS.md   rule decisions and assumptions
 
 ## Managing stories (Story Editor)
 
-Open **Manage stories** at the bottom of the home page (`#/admin`) and enter the admin key. From there you can:
+Open **Story Editor** from the host page (`#/host`), or go to `#/admin`, and enter the admin key. From there you can:
 
 - **Add a mystery:** title, category, difficulty, the text players see, the private solution, and 3–8 clues (4–6 works best) with points from +1 to +10.
 - **Upload a picture:** it's resized and compressed in the browser and stored in Supabase. Show the scene, never the answer.

@@ -14,7 +14,7 @@ export default function HostView({ code }: { code: string }) {
   const credential = hostCredential.get(code)
   if (!credential) {
     return (
-      <Shell>
+      <Shell home="#/host">
         <section className="card narrow">
           <h1>Host key not found</h1>
           <p>
@@ -58,25 +58,25 @@ function HostConsole({ code, api }: { code: string; api: HostApi }) {
       // The game was deleted or expired (old games are cleaned up after 7 days)
       hostCredential.forget(code)
       return (
-        <Shell>
+        <Shell home="#/host">
           <section className="card narrow">
             <h1>This game no longer exists</h1>
             <p>
               Game <strong>{code}</strong> has been closed and cleaned up. Start a new one from the home page.
             </p>
-            <a className="btn btn-primary" href="#/">
+            <a className="btn btn-primary" href="#/host">
               Go to the home page
             </a>
           </section>
         </Shell>
       )
     }
-    return <Shell wide>{error ? <ErrorNote message={error.message} /> : <Loading label="Opening host console…" />}</Shell>
+    return <Shell wide home="#/host">{error ? <ErrorNote message={error.message} /> : <Loading label="Opening host console…" />}</Shell>
   }
 
   const ended = data.session.status === 'ended'
   return (
-    <Shell wide>
+    <Shell wide home="#/host">
       <HostHeader state={data} connection={connection} onEnd={() => act(api.endSession)} busy={busy} />
       <ErrorNote message={actionError} />
       {ended ? (

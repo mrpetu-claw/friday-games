@@ -39,7 +39,7 @@ function AdminLogin({ onKey }: { onKey: (k: string) => void }) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   return (
-    <Shell>
+    <Shell home="#/host">
       <section className="card narrow">
         <h1>Story Editor</h1>
         <p className="muted">Enter the admin key to add and edit mysteries. This browser will remember it.</p>
@@ -107,7 +107,7 @@ function StoryEditor({ api, onLogout }: { api: ReturnType<typeof adminApi>; onLo
   const shown = (list ?? []).filter((m) => (filter === 'all' ? true : filter === 'active' ? m.active : !m.active))
 
   return (
-    <Shell wide>
+    <Shell wide home="#/host">
       <div className="statusbar">
         <h1 style={{ margin: 0 }}>Story Editor</h1>
         <span className="spacer" />
@@ -214,7 +214,7 @@ function MysteryForm({
   }
 
   return (
-    <Shell wide>
+    <Shell wide home="#/host">
       <div className="statusbar">
         <button className="btn" onClick={onClose}>
           ← All stories
