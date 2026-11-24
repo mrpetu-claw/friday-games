@@ -149,6 +149,9 @@ export default function Home() {
           </form>
         </section>
       </div>
+      <p className="center small muted">
+        <a href="#/admin">Manage stories</a>
+      </p>
     </Shell>
   )
 }

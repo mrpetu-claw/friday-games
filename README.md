@@ -21,10 +21,8 @@ A web game for Microsoft Teams calls. The host runs short original mysteries. Pl
 
 ### 1. Create the Supabase project
 1. Sign in at <https://supabase.com> and create a **new project** on the free plan. Pick a region near you, e.g. London.
-2. Open **SQL Editor** and run the three files in `supabase/migrations/`, **in order**:
-   1. `20261124000001_schema.sql`
-   2. `20261124000002_functions.sql`
-   3. `20261124000003_seed_mysteries.sql`
+2. Open **SQL Editor** and run, **in order**:
+   all files in `supabase/migrations/`, in name order
 3. Go to **Project Settings → Data API / API Keys** and copy:
    - the **Project URL** (`https://xxxx.supabase.co`)
    - the **anon** (or *publishable*) key
@@ -80,6 +78,17 @@ supabase/
 docs/DECISIONS.md   rule decisions and assumptions
 ```
 
-## Adding a mystery
+## Managing stories (Story Editor)
 
-Add an `insert` to a new migration with a new `MS-0xx` id, 4–6 clues (points per clue) and an image in `public/mysteries/`. Keep the content original.
+Open **Manage stories** at the bottom of the home page (`#/admin`) and enter the admin key. From there you can:
+
+- **Add a mystery:** title, category, difficulty, the text players see, the private solution, and 3–8 clues (4–6 works best) with points from +1 to +10.
+- **Upload a picture:** it's resized and compressed in the browser and stored in Supabase. Show the scene, never the answer.
+- **Reorder, edit or remove clues**, and see a live preview of what players will see.
+- **Archive** a mystery to hide it from hosts. **Delete** is only possible for mysteries that were never played.
+- You can't edit a mystery while it's being played.
+
+To set or change the admin key, run this in the Supabase SQL Editor:
+```sql
+select game_private.set_admin_key('a-long-random-key-of-at-least-16-characters');
+```

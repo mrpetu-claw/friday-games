@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { ConnectionBadge, ErrorNote, Loading, Scoreboard, Shell, Timer } from '../components/common'
 import { GameError, hostApi, type HostApi } from '../lib/api'
 import { resultHeadline } from '../lib/game'
-import { assetUrl, routeUrl } from '../lib/router'
+import { routeUrl } from '../lib/router'
+import { MysteryImage } from '../components/MysteryImage'
 import { hostCredential } from '../lib/storage'
 import type { BoardPlayer, HostState, ScoreEvent } from '../lib/types'
 import { useLiveState } from '../lib/useLiveState'
@@ -245,7 +246,7 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
   return (
     <section className="card mystery host-mystery">
       <div className="host-mystery-head">
-        <img src={assetUrl(round.mystery.image)} alt="" className="thumb" />
+        <MysteryImage path={round.mystery.image} className="thumb" />
         <div>
           <div className="mystery-meta">
             <span className="pill">Mystery {round.seq}</span>

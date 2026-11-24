@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { HostState, PublicState, WhoAmI } from './types'
+import type { AdminMystery, HostState, PublicState, WhoAmI } from './types'
 
 const MESSAGES: Record<string, string> = {
   not_found: 'No game found with that code. Check the code and try again.',
@@ -16,6 +16,19 @@ const MESSAGES: Record<string, string> = {
   invalid_player: 'That player can’t receive points (removed or spectator).',
   already_solved: 'This mystery has already been marked as solved.',
   already_reversed: 'That score has already been undone.',
+  not_admin: 'That admin key is not correct.',
+  invalid_title: 'The title needs 1–80 characters.',
+  invalid_category: 'The category needs 1–40 characters.',
+  invalid_difficulty: 'Choose Easy, Medium or Hard.',
+  invalid_prompt: 'The story for players needs 20–1200 characters.',
+  invalid_solution: 'The solution needs 20–2000 characters.',
+  invalid_clue_count: 'A mystery needs between 3 and 8 clues (4–6 works best).',
+  invalid_clue_text: 'Each clue needs 3–240 characters.',
+  invalid_clue_points: 'Clue points must be between 1 and 10.',
+  mystery_in_play: 'This mystery is being played right now. Edit it after the round closes.',
+  mystery_used: 'This mystery has already been played, so it can’t be deleted. Archive it instead.',
+  invalid_image: 'That file isn’t a supported image (use JPG, PNG or WebP).',
+  image_too_large: 'That image is too large even after compression. Try a smaller one.',
 }
 
 export class GameError extends Error {
@@ -79,3 +92,18 @@ export function hostApi(code: string, credential: string) {
   }
 }
 export type HostApi = ReturnType<typeof hostApi>
+
+// ---- Story Editor (admin key is kept in this browser only)
+export function adminApi(key: string) {
+  const a = (fn: string, args: Record<string, unknown> = {}) => call<unknown>(fn, { p_key: key, ...args })
+  return {
+    list: () => a('admin_list_mysteries') as Promise<AdminMystery[]>,
+    save: (m: AdminMystery) => a('admin_save_mystery', { p_mystery: m }) as Promise<AdminMystery>,
+    uploadImage: (id: string, mime: string, base64: string) =>
+      a('admin_upload_image', { p_mystery_id: id, p_mime: mime, p_base64: base64 }) as Promise<{ image: string }>,
+    remove: (id: string) => a('admin_delete_mystery', { p_mystery_id: id }),
+  }
+}
+
+export const getMysteryImage = (id: string) =>
+  call<{ mime: string; data: string } | null>('get_mystery_image', { p_mystery_id: id })

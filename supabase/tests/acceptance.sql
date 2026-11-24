@@ -279,4 +279,67 @@ do $$ begin
     raise exception 'FAIL no broadcast'; end if;
 end $$;
 
+-- Story Editor
+select game_private.set_admin_key('test-admin-key-0123456789');
+set role anon;
+do $$ declare r jsonb; m jsonb; first_clue text; begin
+  begin perform public.admin_list_mysteries('wrong'); raise exception 'FAIL admin with wrong key';
+  exception when raise_exception then if sqlerrm <> 'not_admin' then raise; end if; end;
+  if jsonb_array_length(public.admin_list_mysteries('test-admin-key-0123456789')) < 6 then raise exception 'FAIL admin list'; end if;
+
+  -- create
+  m := public.admin_save_mystery('test-admin-key-0123456789', jsonb_build_object(
+    'title', 'The Test Case', 'category', 'Office', 'difficulty', 'Easy',
+    'prompt', 'Something odd happened in the office kitchen this morning.',
+    'solution', 'Someone left the fridge door open overnight.',
+    'clues', jsonb_build_array(
+       jsonb_build_object('text', 'It involves the fridge.', 'points', 3),
+       jsonb_build_object('text', 'It happened overnight.', 'points', 2),
+       jsonb_build_object('text', 'Nobody did it on purpose.', 'points', 2))));
+  if m->>'id' <> 'MS-007' or jsonb_array_length(m->'clues') <> 3 then raise exception 'FAIL create %', m; end if;
+  first_clue := m->'clues'->0->>'id';
+
+  -- edit: reorder, change points, drop one clue, add one
+  m := public.admin_save_mystery('test-admin-key-0123456789', jsonb_build_object(
+    'id', 'MS-007', 'title', 'The Test Case', 'category', 'Office', 'difficulty', 'Medium',
+    'prompt', 'Something odd happened in the office kitchen this morning.',
+    'solution', 'Someone left the fridge door open overnight.', 'active', false,
+    'clues', jsonb_build_array(
+       jsonb_build_object('text', 'Nobody did it on purpose.', 'points', 2),
+       jsonb_build_object('id', first_clue, 'text', 'It involves the fridge.', 'points', 5),
+       jsonb_build_object('text', 'The door was left open.', 'points', 3))));
+  if m->'clues'->1->>'id' <> first_clue or (m->'clues'->1->>'points')::int <> 5
+     or m->>'difficulty' <> 'Medium' or (m->>'active')::boolean then raise exception 'FAIL edit %', m; end if;
+
+  -- validation
+  begin perform public.admin_save_mystery('test-admin-key-0123456789', jsonb_build_object(
+      'title', 'x', 'category', 'y', 'difficulty', 'Easy', 'prompt', 'too short', 'solution', 'too short',
+      'clues', '[]'::jsonb)); raise exception 'FAIL validation';
+  exception when raise_exception then if sqlerrm not like 'invalid_%' then raise; end if; end;
+
+  -- image round trip
+  r := public.admin_upload_image('test-admin-key-0123456789', 'MS-007', 'image/png', encode('fakepng'::bytea, 'base64'));
+  if r->>'image' not like 'db:MS-007:%' then raise exception 'FAIL image path'; end if;
+  if decode(public.get_mystery_image('MS-007')->>'data', 'base64') <> 'fakepng'::bytea then raise exception 'FAIL image data'; end if;
+
+  -- archived mysteries can't be started
+  r := public.create_session('competitive');
+  begin perform public.host_start_mystery(r->>'code', r->>'host_credential', 'MS-007'); raise exception 'FAIL archived started';
+  exception when raise_exception then if sqlerrm <> 'invalid_mystery' then raise; end if; end;
+
+  -- played mysteries can't be deleted; unplayed can
+  begin perform public.admin_delete_mystery('test-admin-key-0123456789', 'MS-001'); raise exception 'FAIL deleted played';
+  exception when raise_exception then if sqlerrm <> 'mystery_used' then raise; end if; end;
+  perform public.admin_delete_mystery('test-admin-key-0123456789', 'MS-007');
+end $$;
+reset role;
+
+-- Housekeeping: a finished session with players, awards and reversals deletes cleanly
+update public.sessions set created_at = now() - interval '8 days' where public_code = (select v from t where k='code');
+select game_private.cleanup();
+do $$ begin
+  if exists (select 1 from public.sessions where public_code = (select v from t where k='code')) then
+    raise exception 'FAIL cleanup did not delete old session'; end if;
+end $$;
+
 select 'ALL ACCEPTANCE TESTS PASSED' as result;

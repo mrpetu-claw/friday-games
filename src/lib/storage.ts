@@ -39,3 +39,8 @@ export function recentHostedCodes(): string[] {
     return []
   }
 }
+
+export const adminKey = {
+  get: () => read('admin'),
+  set: (key: string | null) => write('admin', key),
+}

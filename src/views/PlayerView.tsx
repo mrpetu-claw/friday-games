@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { ConnectionBadge, ErrorNote, Loading, Scoreboard, Shell, Timer } from '../components/common'
 import { getPublicState, whoami } from '../lib/api'
 import { resultHeadline } from '../lib/game'
-import { assetUrl, routeUrl } from '../lib/router'
+import { routeUrl } from '../lib/router'
+import { MysteryImage } from '../components/MysteryImage'
 import { playerToken } from '../lib/storage'
 import { useLiveState } from '../lib/useLiveState'
 
@@ -67,7 +68,7 @@ export default function PlayerView({ code }: { code: string }) {
             </section>
           ) : (
             <article className="card mystery" aria-live="polite">
-              <img src={assetUrl(round.mystery.image)} alt="" className="mystery-art" />
+              <MysteryImage path={round.mystery.image} className="mystery-art" />
               <div className="mystery-meta">
                 <span className="pill">Mystery {round.seq}</span>
                 <span className="pill">{round.mystery.category}</span>

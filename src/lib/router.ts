@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react'
 //   #/host/CODE        host view (needs the host key stored in this browser)
 //   #/play/CODE        public player view (safe to share in Teams)
 //   #/join/CODE        join form (name, or link code for manually added players)
+//   #/admin            Story Editor (needs the admin key)
 
 export type Route =
   | { name: 'home' }
   | { name: 'host'; code: string }
   | { name: 'play'; code: string }
   | { name: 'join'; code: string }
+  | { name: 'admin' }
 
 export function parseRoute(hash: string): Route {
   const [, view, code = ''] = hash.replace(/^#/, '').split('/')
@@ -18,6 +20,7 @@ export function parseRoute(hash: string): Route {
   if (view === 'host' && c) return { name: 'host', code: c }
   if (view === 'play' && c) return { name: 'play', code: c }
   if (view === 'join') return { name: 'join', code: c }
+  if (view === 'admin') return { name: 'admin' }
   return { name: 'home' }
 }
 

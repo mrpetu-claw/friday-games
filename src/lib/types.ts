@@ -131,3 +131,24 @@ export interface HostState {
 export type WhoAmI =
   | { status: 'player'; player_id: string; name: string; role: 'player' | 'spectator' }
   | { status: 'pending' | 'rejected' | 'removed' | 'unknown' }
+
+export interface AdminClue {
+  id?: string
+  text: string
+  points: number
+}
+
+export interface AdminMystery {
+  id?: string
+  title: string
+  category: string
+  difficulty: 'Easy' | 'Medium' | 'Hard'
+  prompt: string
+  solution: string
+  image?: string
+  active: boolean
+  updated_at?: string
+  times_played?: number
+  in_play?: boolean
+  clues: AdminClue[]
+}
