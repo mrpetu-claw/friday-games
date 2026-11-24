@@ -37,9 +37,7 @@ A web game for Microsoft Teams calls. The host runs short original mysteries. Pl
    ```
 
 ### 2. Connect GitHub Pages
-1. In this repo, open **Settings → Secrets and variables → Actions → Variables** and add:
-   - `VITE_SUPABASE_URL` = your Project URL
-   - `VITE_SUPABASE_ANON_KEY` = your anon / publishable key
+1. Put your Project URL and publishable key in `.env.production`. Both are public values, so the file is committed.
 2. Open **Settings → Pages** and set **Source** to **GitHub Actions**.
 3. Open **Actions → Test and deploy to GitHub Pages → Run workflow**, or push to `main`.
    The workflow runs the tests, builds the site and publishes it at
