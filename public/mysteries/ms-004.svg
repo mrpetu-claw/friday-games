@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#221d33"/><rect y="640" width="1600" height="260" fill="#3a2f45"/>
+<g transform="translate(560 300)"><path d="M0 120L240 0l240 120v300L240 540 0 420z" fill="#b98a55"/><path d="M0 120l240 120 240-120" fill="none" stroke="#7a5a36" stroke-width="6"/><path d="M240 240v300" stroke="#7a5a36" stroke-width="6"/><path d="M0 120L240 0l240 120-240 120z" fill="#d1a26c"/>
+<rect x="60" y="260" width="140" height="90" fill="#f4f1e6" transform="skewY(26)"/><text x="80" y="345" font-family="Georgia,serif" font-size="22" fill="#a33" transform="skewY(26)" font-weight="700">FRAGILE</text>
+<rect x="300" y="300" width="130" height="40" rx="6" fill="#e5566b" transform="skewY(-26)"/><text x="365" y="327" font-family="monospace" font-size="20" fill="#fff" text-anchor="middle" transform="skewY(-26)">#40217</text></g>
+<g transform="translate(1180 240)"><circle r="60" fill="none" stroke="#f2c14e" stroke-width="5" opacity=".7"/><circle r="100" fill="none" stroke="#f2c14e" stroke-width="4" opacity=".4"/><circle r="140" fill="none" stroke="#f2c14e" stroke-width="3" opacity=".2"/><circle r="18" fill="#f2c14e"/></g>
+<g transform="translate(220 180)"><path d="M0 60l50-60h100l50 60-100 110z" fill="#9fd8ff" stroke="#e8f6ff" stroke-width="5"/><path d="M0 60h200M50 0l50 170 50-170" stroke="#e8f6ff" stroke-width="3" fill="none"/></g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#1c2a3a"/><rect x="0" y="0" width="1600" height="420" fill="#26443a"/><rect x="0" y="400" width="1600" height="30" fill="#7a5a3a"/>
+<text x="800" y="200" font-family="Georgia,serif" font-size="90" fill="#e8efe8" text-anchor="middle" opacity=".85">TRUE  or  FALSE ?</text>
+<g transform="translate(470 470) rotate(-4)"><rect width="660" height="400" rx="8" fill="#f4f1e6"/>
+<g font-family="Georgia,serif" font-size="30" fill="#334"><text x="40" y="70">1. ________  T  F</text><text x="40" y="130">2. ________  T  F</text><text x="40" y="190">3. ________  T  F</text><text x="40" y="250">4. ________  T  F</text><text x="40" y="310">5. ________  T  F</text></g>
+<g fill="none" stroke="#e5566b" stroke-width="6"><path d="M300 55l30 25M330 55l-30 25"/><path d="M350 115l30 25M380 115l-30 25"/><path d="M300 175l30 25M330 175l-30 25"/><path d="M350 235l30 25M380 235l-30 25"/><path d="M300 295l30 25M330 295l-30 25"/></g>
+<circle cx="560" cy="110" r="70" fill="none" stroke="#3fbf7f" stroke-width="8"/><text x="560" y="128" font-family="Georgia,serif" font-size="50" fill="#3fbf7f" text-anchor="middle" font-weight="700">50</text></g>
+<g transform="translate(1260 560)"><circle r="70" fill="#f2c14e"/><path d="M-40 60l-30 120h50l20-60 20 60h50l-30-120z" fill="#e5566b"/></g>
+</svg>
