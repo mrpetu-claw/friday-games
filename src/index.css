@@ -159,3 +159,6 @@ input[type='text'], input[type='number'], input:not([type]) {
 .log ul { list-style: none; padding: 0; margin: 12px 0 0; max-height: 320px; overflow: auto; }
 .log li { padding: 6px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .log li.struck { opacity: 0.55; text-decoration: line-through; }
+
+.join-link { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--bg-2); border: 1px solid var(--gold); border-radius: 10px; padding: 8px 12px; }
+.join-link input { flex: 1; min-width: 240px; font-family: ui-monospace, Consolas, monospace; font-size: 0.9rem; }

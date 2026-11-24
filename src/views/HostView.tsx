@@ -97,16 +97,18 @@ function HostHeader({
   busy: boolean
 }) {
   const [copied, setCopied] = useState(false)
+  const [showLink, setShowLink] = useState(false)
   const s = state.session
   const joinUrl = routeUrl(`/join/${s.code}`)
+  const message = `Join Friday Games: ${joinUrl} (code ${s.code})`
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(`Join Friday Games: ${joinUrl} (code ${s.code})`)
+    const ok = await copyText(message)
+    if (ok) {
       setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      /* clipboard blocked: the link is visible anyway */
+      window.setTimeout(() => setCopied(false), 2500)
     }
+    // Always show the link too, so it can be copied by hand if the browser blocks the clipboard
+    setShowLink(true)
   }
   return (
     <div className="statusbar host-bar">
@@ -135,8 +137,47 @@ function HostHeader({
           End session
         </button>
       )}
+      {showLink && (
+        <div className="join-link" role="status">
+          <span className="small">{copied ? 'Copied! Paste it in the Teams chat:' : 'Copy this and paste it in the Teams chat:'}</span>
+          <input
+            readOnly
+            value={message}
+            aria-label="Join message"
+            onFocus={(e) => e.currentTarget.select()}
+            ref={(el) => el?.select()}
+          />
+          <button className="btn btn-small" onClick={() => setShowLink(false)}>
+            Close
+          </button>
+        </div>
+      )}
     </div>
   )
+}
+
+/** Clipboard API first, then the older execCommand route (works where the API is blocked). */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    /* fall through */
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
 }
 
 type Act = (fn: () => Promise<unknown>) => Promise<void>
