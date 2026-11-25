@@ -78,15 +78,11 @@ export function HostHome() {
   }
 
   return (
-    <Shell home="#/host">
-      <section className="hero">
-        <h1>Host a game</h1>
-        <p className="lead">You run the game, answer questions and award clues.</p>
-      </section>
-
-      <div className="grid-2">
-        <section className="card">
-          <h2>New game</h2>
+    <Shell wide home="#/host">
+      <div className="host-home">
+        <section className="sheet">
+          <h1>Host a game</h1>
+          <p className="lead">Pick a game and a mode. You’ll get a code to share in the Teams chat.</p>
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -95,73 +91,85 @@ export function HostHome() {
           >
             <fieldset>
               <legend>Game</legend>
-              {GAMES.map((g) => (
-                <label key={g.id} className={`option ${!g.available ? 'disabled' : ''}`}>
-                  <input
-                    type="radio"
-                    name="game"
-                    value={g.id}
-                    checked={game === g.id}
-                    disabled={!g.available}
-                    onChange={() => setGame(g.id)}
-                  />
-                  <span>
-                    <strong>{g.name}</strong> <span className="muted small">{g.tagline}</span>
-                  </span>
-                </label>
-              ))}
+              <div className="game-tiles">
+                {GAMES.map((g) => (
+                  <label key={g.id} className={`game-tile ${!g.available ? 'is-soon' : ''} ${game === g.id ? 'is-on' : ''}`}>
+                    <input
+                      type="radio"
+                      name="game"
+                      value={g.id}
+                      checked={game === g.id}
+                      disabled={!g.available}
+                      onChange={() => setGame(g.id)}
+                    />
+                    {g.available ? (
+                      <img src={`${import.meta.env.BASE_URL}mysteries/ms-001.webp`} alt="" className="game-tile-art" />
+                    ) : (
+                      <span className="game-tile-art img-placeholder" aria-hidden="true" />
+                    )}
+                    <span className="game-tile-body">
+                      <strong>{g.name}</strong>
+                      <span>{g.tagline}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </fieldset>
             <fieldset>
               <legend>Mode</legend>
-              <label className="option">
-                <input type="radio" name="mode" checked={mode === 'competitive'} onChange={() => setMode('competitive')} />
-                <span>
-                  <strong>Competitive</strong> <span className="muted small">Individual scores, winner at the end</span>
-                </span>
-              </label>
-              <label className="option">
-                <input type="radio" name="mode" checked={mode === 'cooperative'} onChange={() => setMode('cooperative')} />
-                <span>
-                  <strong>Cooperative</strong> <span className="muted small">One team score against a goal</span>
-                </span>
-              </label>
+              <div className="mode-tiles">
+                <label className={`mode-tile ${mode === 'competitive' ? 'is-on' : ''}`}>
+                  <input type="radio" name="mode" checked={mode === 'competitive'} onChange={() => setMode('competitive')} />
+                  <strong>Competitive</strong>
+                  <span>Everyone scores for themselves. Highest score wins; ties share the win.</span>
+                </label>
+                <label className={`mode-tile ${mode === 'cooperative' ? 'is-on' : ''}`}>
+                  <input type="radio" name="mode" checked={mode === 'cooperative'} onChange={() => setMode('cooperative')} />
+                  <strong>Cooperative</strong>
+                  <span>One shared team score, playing against a points goal.</span>
+                </label>
+              </div>
               {mode === 'cooperative' && (
-                <label className="field">
-                  Team goal (points)
+                <label className="field goal-field">
+                  Team goal in points
                   <input type="number" min={5} max={500} value={target} onChange={(e) => setTarget(Number(e.target.value))} />
                 </label>
               )}
             </fieldset>
             <ErrorNote message={error} />
-            <button type="submit" className="btn btn-primary" disabled={busy}>
+            <button type="submit" className="btn btn-primary btn-large" disabled={busy}>
               {busy ? 'Creating…' : 'Create game'}
             </button>
+            <p className="muted small create-note">The 60-minute timer starts when you start the first mystery, not now.</p>
           </form>
         </section>
 
-        <div>
-          <section className="card">
+        <aside>
+          <section className="board-panel">
             <h2>Your open games</h2>
             {recent.length === 0 ? (
-              <p className="muted small">None right now. Games you create in this browser appear here until they end.</p>
+              <p className="board-foot">None right now. Games you create in this browser stay here until they end.</p>
             ) : (
-              <p>
+              <ul className="open-games">
                 {recent.map((c) => (
-                  <a key={c} href={`#/host/${c}`} className="btn code-link">
-                    {c}
-                  </a>
+                  <li key={c}>
+                    <span className="open-code">{c}</span>
+                    <a className="btn btn-small btn-light" href={`#/host/${c}`}>
+                      Resume
+                    </a>
+                  </li>
                 ))}
-              </p>
+              </ul>
             )}
           </section>
-          <section className="card">
+          <section className="sheet side-sheet">
             <h2>Stories</h2>
-            <p className="muted small">Add or edit mysteries, clues and pictures.</p>
+            <p className="muted">Add or edit mysteries, clues and pictures in the Story Editor.</p>
             <a className="btn" href="#/admin">
               Open Story Editor
             </a>
           </section>
-        </div>
+        </aside>
       </div>
     </Shell>
   )
