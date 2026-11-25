@@ -7,6 +7,7 @@ export function Timer({ session }: { session: SessionInfo }) {
   const now = useNow()
   const [offset] = useState(() => clockOffset(session))
   const ms = remainingMs(session, offset, now)
+  if (session.status === 'ended') return <span className="timer muted">Ended</span>
   if (ms === null) return <span className="timer muted" aria-label="Timer not started">60:00</span>
   const low = ms < 5 * 60 * 1000
   return (
@@ -39,27 +40,29 @@ export function Scoreboard({
     const pct = Math.min(100, Math.round((board.team_score / target) * 100))
     const players = board.players.filter((p) => p.role === 'player')
     return (
-      <section className="card" aria-labelledby="team-heading">
+      <section className="board-panel" aria-labelledby="team-heading">
         <h2 id="team-heading">Team score</h2>
-        <div className="team-score">
-          <strong>{board.team_score}</strong> <span className="muted">/ {target} goal</span>
-        </div>
-        <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <p className="team-score">
+          <strong>{board.team_score}</strong>
+          <span>of {target} points</span>
+        </p>
+        <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progress to the team goal">
           <div style={{ width: `${pct}%` }} />
         </div>
-        <p className="muted small">
-          {board.mysteries_solved} solved · {players.length} detective{players.length === 1 ? '' : 's'}
-          {players.length > 0 && `: ${players.map((p) => p.name).join(', ')}`}
+        <p className="board-foot">
+          {board.mysteries_solved} solved so far.
+          {players.length > 0 && <> Detectives: {players.map((p) => p.name).join(', ')}.</>}
         </p>
       </section>
     )
   }
   const ranked = rankPlayers(board.players)
+  const best = Math.max(1, ...ranked.map((p) => p.score))
   return (
-    <section className="card" aria-labelledby="board-heading">
+    <section className="board-panel" aria-labelledby="board-heading">
       <h2 id="board-heading">Scoreboard</h2>
       {ranked.length === 0 ? (
-        <p className="muted">Waiting for detectives to join…</p>
+        <p className="board-foot">Waiting for detectives to join.</p>
       ) : (
         <ol className="board">
           {ranked.map((p) => (
@@ -69,10 +72,13 @@ export function Scoreboard({
                 {p.name}
                 {p.id === highlightId && <span className="you"> (you)</span>}
               </span>
-              <span className="clues muted small" title="Clues found">
-                🔍 {p.clues}
-              </span>
               <span className="score">{p.score}</span>
+              <span className="bar" aria-hidden="true">
+                <span style={{ width: `${Math.max(0, (p.score / best) * 100)}%` }} />
+              </span>
+              <span className="clues-found">
+                {p.clues} {p.clues === 1 ? 'clue' : 'clues'}
+              </span>
             </li>
           ))}
         </ol>

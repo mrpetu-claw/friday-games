@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
+import { CodeInput } from '../components/CodeInput'
 import { ErrorNote, Shell } from '../components/common'
 import { GAMES } from '../games/registry'
 import { createSession, GameError, getPublicState } from '../lib/api'
-import { normaliseCode } from '../lib/game'
 import { go } from '../lib/router'
 import { hostCredential, playerToken, recentHostedCodes } from '../lib/storage'
 import type { Mode } from '../lib/types'
@@ -12,11 +12,9 @@ export function PlayerHome() {
   const [code, setCode] = useState('')
   return (
     <Shell>
-      <section className="hero">
-        <h1>Friday Games</h1>
+      <section className="sheet narrow join-sheet">
+        <h1>Join the game</h1>
         <p className="lead">Enter the code your host shared in the Teams chat.</p>
-      </section>
-      <section className="card narrow">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -25,19 +23,7 @@ export function PlayerHome() {
             go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
           }}
         >
-          <label className="field">
-            Game code
-            <input
-              className="code-input"
-              inputMode="text"
-              autoCapitalize="characters"
-              autoComplete="off"
-              autoFocus
-              placeholder="e.g. K7MQ2D"
-              value={code}
-              onChange={(e) => setCode(normaliseCode(e.target.value))}
-            />
-          </label>
+          <CodeInput value={code} onChange={setCode} autoFocus />
           <button type="submit" className="btn btn-primary" disabled={code.length !== 6}>
             Join game
           </button>

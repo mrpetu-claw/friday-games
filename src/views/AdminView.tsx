@@ -141,7 +141,7 @@ function StoryEditor({ api, onLogout }: { api: ReturnType<typeof adminApi>; onLo
                 </span>
                 <strong>{m.title}</strong>
                 <span className="muted small">
-                  {m.category} · {m.clues.length} clues · played {m.times_played ?? 0}×
+                  {m.category}, {m.clues.length} clues, played {m.times_played ?? 0} times
                 </span>
               </span>
             </button>
@@ -219,7 +219,7 @@ function MysteryForm({
         <button className="btn" onClick={onClose}>
           ← All stories
         </button>
-        <h1 style={{ margin: 0 }}>{isNew ? 'New mystery' : `${m.id} · ${m.title || 'Untitled'}`}</h1>
+        <h1 style={{ margin: 0 }}>{isNew ? 'New mystery' : m.title || 'Untitled'}</h1>
         <span className="spacer" />
         {m.in_play && <span className="badge badge-warn">Being played right now</span>}
         {saved && <span className="badge badge-live">Saved</span>}
@@ -272,7 +272,7 @@ function MysteryForm({
 
           <section className="card">
             <h2>
-              Clues <span className="muted small">{m.clues.length} clues · {total} points in total · 4–6 works best</span>
+              Clues <span className="muted small">{m.clues.length} clues, {total} points in total (4–6 clues works best)</span>
             </h2>
             <p className="muted small">
               Order them from broad to specific. Each clue should be something players can discover with yes/no questions.
@@ -362,7 +362,7 @@ function MysteryForm({
           </section>
 
           <section className="card preview">
-            <p className="eyebrow">Player preview</p>
+            <p className="preview-label">Player preview</p>
             <div className="mystery-meta">
               <span className="pill">{m.category || 'Category'}</span>
               <span className={`pill diff-${m.difficulty.toLowerCase()}`}>{m.difficulty}</span>

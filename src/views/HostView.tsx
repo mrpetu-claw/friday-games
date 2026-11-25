@@ -80,8 +80,8 @@ function HostConsole({ code, api }: { code: string; api: HostApi }) {
       <HostHeader state={data} connection={connection} onEnd={() => act(api.endSession)} busy={busy} />
       <ErrorNote message={actionError} />
       {ended ? (
-        <section className="card result">
-          <p className="eyebrow">{data.session.end_reason === 'time_limit' ? 'Time limit reached' : 'Session ended'}</p>
+        <section className="result">
+          <p className="stamp">{data.session.end_reason === 'time_limit' ? 'Time limit reached' : 'Session ended'}</p>
           <h1>{resultHeadline(data.session, data.board)}</h1>
           <p className="muted">
             {data.board.mysteries_solved} of {data.board.mysteries_played} mysteries solved. Results are kept; no further
@@ -130,11 +130,12 @@ function HostHeader({
   }
   return (
     <div className="statusbar host-bar">
-      <span className="badge badge-private" title="Do not share this tab on screen">🔒 Host view — private</span>
+      <span className="badge badge-private" title="Do not share this tab on screen">Private host view</span>
       <span className="code-chip">
-        Code <strong>{s.code}</strong>
+        <span className="code-chip-label">Code</span>
+        <strong>{s.code}</strong>
       </span>
-      <span className="muted small">{s.mode === 'competitive' ? 'Competitive' : `Cooperative · goal ${s.settings.coop_target}`}</span>
+      <span className="muted">{s.mode === 'competitive' ? 'Competitive' : `Cooperative, goal ${s.settings.coop_target}`}</span>
       <span className="spacer" />
       <ConnectionBadge connection={connection} />
       <Timer session={s} />
@@ -241,8 +242,8 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
                 <span>
                   <strong>{m.title}</strong>{' '}
                   <span className="muted small">
-                    {m.category} · {m.difficulty}
-                    {m.played && ' · already played'}
+                    {m.category}, {m.difficulty.toLowerCase()}
+                    {m.played && ' (played)'}
                   </span>
                 </span>
               </label>
@@ -328,7 +329,7 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
                   {c.text}{' '}
                   <span className="muted small">
                     +{c.points}
-                    {awarded && ` · ${c.award!.player ?? 'team'}`}
+                    {awarded && `, ${c.award!.player ?? 'team'}`}
                   </span>
                 </span>
               </label>
@@ -524,7 +525,7 @@ function PlayerRow({
             <strong>{p.name}</strong>{' '}
             <span className="muted small">
               {p.role === 'spectator' ? 'spectator' : `${p.score} pts`}
-              {p.join_method === 'manual' && (p.linked ? ' · linked' : ' · added by host')}
+              {p.join_method === 'manual' && (p.linked ? ', linked' : ', added by host')}
             </span>
           </span>
           {!disabled && (
@@ -574,7 +575,7 @@ function EventLog({ events, api, act, disabled }: { events: ScoreEvent[]; api: H
         {events.map((e) => (
           <li key={e.id} className={e.reversed ? 'struck' : ''}>
             <span className="muted small">{new Date(e.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>{' '}
-            <strong>{e.amount > 0 ? `+${e.amount}` : e.amount}</strong> {REASON[e.reason]} · {e.player ?? 'team'}
+            <strong>{e.amount > 0 ? `+${e.amount}` : e.amount}</strong> {REASON[e.reason]}, {e.player ?? 'team'}
             {e.clue && <span className="muted small"> — {e.clue}</span>}
             {!disabled && !e.reversed && ['partial', 'solve', 'wrong_guess'].includes(e.reason) && (
               <button className="btn btn-small" onClick={() => act(() => api.reverseEvent(e.id))}>

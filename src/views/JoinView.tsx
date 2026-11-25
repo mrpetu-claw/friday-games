@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CodeInput } from '../components/CodeInput'
 import { ErrorNote, Loading, Shell } from '../components/common'
 import { GameError, getPublicState, joinSession, requestLink, whoami } from '../lib/api'
 import { normaliseCode } from '../lib/game'
@@ -80,7 +81,7 @@ export default function JoinView({ code: initial }: { code: string }) {
   if (pending) {
     return (
       <Shell>
-        <section className="card narrow">
+        <section className="sheet narrow join-sheet">
           <h1>Almost there</h1>
           <p>
             Waiting for the host to confirm that you are {pending.name ? <strong>{pending.name}</strong> : 'this player'}.
@@ -94,7 +95,7 @@ export default function JoinView({ code: initial }: { code: string }) {
 
   return (
     <Shell>
-      <section className="card narrow">
+      <section className="sheet narrow join-sheet">
         <h1>Join game</h1>
         <div className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === 'name'} className={tab === 'name' ? 'active' : ''} onClick={() => setTab('name')}>
@@ -110,16 +111,7 @@ export default function JoinView({ code: initial }: { code: string }) {
             void submit()
           }}
         >
-          <label className="field">
-            Game code
-            <input
-              className="code-input"
-              value={code}
-              autoComplete="off"
-              autoCapitalize="characters"
-              onChange={(e) => setCode(normaliseCode(e.target.value))}
-            />
-          </label>
+          <CodeInput value={code} onChange={setCode} />
           {tab === 'name' ? (
             <>
               <label className="field">
