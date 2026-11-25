@@ -1,60 +1,84 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
- * Two-step button: the first click asks inline ("End for everyone?  Yes / Cancel"),
- * the second confirms. Replaces window.confirm, which some browsers block.
+ * Button that opens an in-page confirmation dialog (native <dialog>, so focus is
+ * trapped, Escape closes and focus returns to the trigger). Cancel is focused by
+ * default; the confirm button names the action. Works where window.confirm is blocked.
  */
 export function ConfirmButton({
   children,
-  question,
+  title,
+  body,
   confirmLabel,
   onConfirm,
   className = 'btn',
-  confirmClassName = 'btn btn-danger',
+  danger = true,
   disabled,
 }: {
   children: ReactNode
-  question: string
+  title: string
+  body?: string
   confirmLabel: string
   onConfirm: () => void
   className?: string
-  confirmClassName?: string
+  danger?: boolean
   disabled?: boolean
 }) {
-  const [asking, setAsking] = useState(false)
-  const yesRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    if (!asking) return
-    yesRef.current?.focus()
-    const t = window.setTimeout(() => setAsking(false), 8000) // step back if left alone
-    return () => window.clearTimeout(t)
-  }, [asking])
+    const d = dialogRef.current
+    if (!d) return
+    if (open && !d.open) {
+      d.showModal()
+      cancelRef.current?.focus()
+    }
+    if (!open && d.open) d.close()
+  }, [open])
 
-  if (!asking) {
-    return (
-      <button type="button" className={className} disabled={disabled} onClick={() => setAsking(true)}>
+  const close = () => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+
+  return (
+    <>
+      <button ref={triggerRef} type="button" className={className} disabled={disabled} onClick={() => setOpen(true)}>
         {children}
       </button>
-    )
-  }
-  return (
-    <span className="confirm" role="group" aria-label={question}>
-      <span className="confirm-q">{question}</span>
-      <button
-        ref={yesRef}
-        type="button"
-        className={confirmClassName}
-        onClick={() => {
-          setAsking(false)
-          onConfirm()
+      <dialog
+        ref={dialogRef}
+        className="confirm-dialog"
+        aria-labelledby={undefined}
+        onCancel={(e) => {
+          e.preventDefault()
+          close()
+        }}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) close() // click on the backdrop
         }}
       >
-        {confirmLabel}
-      </button>
-      <button type="button" className="btn btn-small" onClick={() => setAsking(false)} onKeyDown={(e) => e.key === 'Escape' && setAsking(false)}>
-        Cancel
-      </button>
-    </span>
+        <h2>{title}</h2>
+        {body && <p>{body}</p>}
+        <div className="confirm-actions">
+          <button ref={cancelRef} type="button" className="btn" onClick={close}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={danger ? 'btn btn-danger-solid' : 'btn btn-primary'}
+            onClick={() => {
+              close()
+              onConfirm()
+            }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </dialog>
+    </>
   )
 }

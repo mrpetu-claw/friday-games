@@ -5,20 +5,29 @@ import { normaliseCode } from '../lib/game'
 export function CodeInput({
   value,
   onChange,
+  onBlur,
+  error,
   autoFocus,
+  id = 'game-code',
   label = 'Game code',
 }: {
   value: string
   onChange: (code: string) => void
+  onBlur?: () => void
+  error?: string
   autoFocus?: boolean
+  id?: string
   label?: string
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <label className="code-field">
-      <span className="field-label">{label}</span>
-      <span className={`code-boxes ${focused ? 'is-focused' : ''}`}>
+    <div className="code-field">
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <span className={`code-boxes ${focused ? 'is-focused' : ''} ${error ? 'is-invalid' : ''}`}>
         <input
+          id={id}
           value={value}
           inputMode="text"
           autoCapitalize="characters"
@@ -26,9 +35,13 @@ export function CodeInput({
           spellCheck={false}
           autoFocus={autoFocus}
           maxLength={6}
-          aria-label={label}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => {
+            setFocused(false)
+            onBlur?.()
+          }}
           onChange={(e) => onChange(normaliseCode(e.target.value))}
         />
         {Array.from({ length: 6 }).map((_, i) => (
@@ -37,6 +50,11 @@ export function CodeInput({
           </span>
         ))}
       </span>
-    </label>
+      {error && (
+        <span className="field-error" id={`${id}-error`}>
+          {error}
+        </span>
+      )}
+    </div>
   )
 }

@@ -10,21 +10,37 @@ import type { Mode } from '../lib/types'
 /** #/ — what players get: just enter the code. */
 export function PlayerHome() {
   const [code, setCode] = useState('')
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const message = 'Enter the 6-character code from the Teams chat.'
   return (
     <Shell>
       <section className="sheet narrow join-sheet">
         <h1>Join the game</h1>
         <p className="lead">Enter the code your host shared in the Teams chat.</p>
         <form
+          noValidate
           onSubmit={(e) => {
             e.preventDefault()
-            if (code.length !== 6) return
+            if (code.length !== 6) {
+              setCodeError(message)
+              document.getElementById('game-code')?.focus()
+              return
+            }
             // Already joined this game from this browser? Go straight back in.
             go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
           }}
         >
-          <CodeInput value={code} onChange={setCode} autoFocus />
-          <button type="submit" className="btn btn-primary" disabled={code.length !== 6}>
+          <CodeInput
+            value={code}
+            autoFocus
+            error={codeError ?? undefined}
+            onChange={(v) => {
+              setCode(v)
+              setCodeError(null)
+            }}
+            onBlur={() => setCodeError(code.length > 0 && code.length < 6 ? message : null)}
+          />
+          <button type="submit" className="btn btn-primary btn-large btn-block">
             Join game
           </button>
         </form>
@@ -39,7 +55,7 @@ export function HostHome() {
   const [mode, setMode] = useState<Mode>('competitive')
   const [target, setTarget] = useState(60)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<GameError | null>(null)
   const [recent, setRecent] = useState<string[]>([])
 
   // Show only hosted games that still exist and are not finished
@@ -71,7 +87,7 @@ export function HostHome() {
       hostCredential.set(r.code, r.host_credential)
       go(`/host/${r.code}`)
     } catch (e) {
-      setError(e instanceof GameError ? e.message : 'Could not create the game.')
+      setError(e instanceof GameError ? e : new GameError('unknown'))
     } finally {
       setBusy(false)
     }
@@ -136,7 +152,7 @@ export function HostHome() {
                 </label>
               )}
             </fieldset>
-            <ErrorNote message={error} />
+            <ErrorNote error={error} />
             <button type="submit" className="btn btn-primary btn-large" disabled={busy}>
               {busy ? 'Creating…' : 'Create game'}
             </button>
@@ -148,14 +164,14 @@ export function HostHome() {
           <section className="board-panel">
             <h2>Your open games</h2>
             {recent.length === 0 ? (
-              <p className="board-foot">None right now. Games you create in this browser stay here until they end.</p>
+              <p className="board-foot">None right now. Games you create in this browser stay here until they end, so you can get back to them after a refresh.</p>
             ) : (
               <ul className="open-games">
                 {recent.map((c) => (
                   <li key={c}>
                     <span className="open-code">{c}</span>
                     <a className="btn btn-small btn-light" href={`#/host/${c}`}>
-                      Resume
+                      Resume game
                     </a>
                   </li>
                 ))}

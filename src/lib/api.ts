@@ -16,6 +16,8 @@ const MESSAGES: Record<string, string> = {
   invalid_player: 'That player can’t receive points (removed or spectator).',
   already_solved: 'This mystery has already been marked as solved.',
   already_reversed: 'That score has already been undone.',
+  link_rejected: 'The host didn’t confirm the request. Ask them for a new 6-digit code and try again.',
+  not_configured: 'This copy of the game isn’t connected to its server yet.',
   not_admin: 'That admin key is not correct.',
   invalid_title: 'The title needs 1–80 characters.',
   invalid_category: 'The category needs 1–40 characters.',
@@ -33,9 +35,14 @@ const MESSAGES: Record<string, string> = {
 
 export class GameError extends Error {
   code: string
+  known: boolean
   constructor(code: string) {
-    super(MESSAGES[code] ?? 'Something went wrong. Please try again.')
+    super(
+      MESSAGES[code] ??
+        'The game server couldn’t complete that, so nothing was changed. Check your connection and try again.',
+    )
     this.code = code
+    this.known = code in MESSAGES
   }
 }
 

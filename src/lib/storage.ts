@@ -45,3 +45,8 @@ export const adminKey = {
   get: () => read('admin'),
   set: (key: string | null) => write('admin', key),
 }
+
+export const lastName = {
+  get: () => read('last-name') ?? '',
+  set: (name: string) => write('last-name', name),
+}

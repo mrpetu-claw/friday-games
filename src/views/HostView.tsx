@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
-import { ConnectionBadge, ErrorNote, Loading, Scoreboard, Shell, Timer } from '../components/common'
+import { ConnectionBadge, ErrorNote, PageSkeleton, Scoreboard, Shell, Timer } from '../components/common'
+import { ConfirmButton } from '../components/ConfirmButton'
+import { MysteryImage } from '../components/MysteryImage'
 import { GameError, hostApi, type HostApi } from '../lib/api'
 import { resultHeadline } from '../lib/game'
 import { routeUrl } from '../lib/router'
-import { ConfirmButton } from '../components/ConfirmButton'
-import { MysteryImage } from '../components/MysteryImage'
 import { hostCredential } from '../lib/storage'
 import type { BoardPlayer, HostState, ScoreEvent } from '../lib/types'
 import { useLiveState } from '../lib/useLiveState'
+
+// Page pattern: Detail (the running mystery) with a side panel (scores, players).
 
 const TEAM = '__team__'
 
@@ -16,17 +18,12 @@ export default function HostView({ code }: { code: string }) {
   if (!credential) {
     return (
       <Shell home="#/host">
-        <section className="card narrow">
-          <h1>Host key not found</h1>
-          <p>
-            This browser doesn’t hold the host key for game <strong>{code}</strong>. Only the browser that created the
-            game can host it.
-          </p>
-          <p>
-            <a className="btn" href={`#/play/${code}`}>
-              Open the public view instead
-            </a>
-          </p>
+        <section className="sheet narrow">
+          <h1>This browser can’t host game {code}</h1>
+          <p>Only the browser that created a game holds its host key. You can still follow the game on the public screen.</p>
+          <a className="btn btn-primary" href={`#/play/${code}`}>
+            Open the public screen
+          </a>
         </section>
       </Shell>
     )
@@ -36,18 +33,18 @@ export default function HostView({ code }: { code: string }) {
 
 function HostConsole({ code, api }: { code: string; api: HostApi }) {
   const { data, error, connection, refresh } = useLiveState(code, api.getState)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<GameError | null>(null)
   const [busy, setBusy] = useState(false)
 
-  // Runs a host action, shows a friendly error and refreshes (the broadcast
-  // will also arrive, the explicit refresh just makes the host UI snappier).
+  // Runs a host action, shows a clear error and refreshes (the broadcast will
+  // also arrive; the explicit refresh just makes the host UI snappier).
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
     setActionError(null)
     try {
       await fn()
     } catch (e) {
-      setActionError(e instanceof GameError ? e.message : 'That didn’t work. Try again.')
+      setActionError(e instanceof GameError ? e : new GameError('unknown'))
     } finally {
       setBusy(false)
       void refresh()
@@ -60,34 +57,35 @@ function HostConsole({ code, api }: { code: string; api: HostApi }) {
       hostCredential.forget(code)
       return (
         <Shell home="#/host">
-          <section className="card narrow">
-            <h1>This game no longer exists</h1>
-            <p>
-              Game <strong>{code}</strong> has been closed and cleaned up. Start a new one from the home page.
-            </p>
+          <section className="sheet narrow">
+            <h1>Game {code} has ended</h1>
+            <p>It was closed and cleaned up, so it can’t be hosted any more. Create a new game to play again.</p>
             <a className="btn btn-primary" href="#/host">
-              Go to the home page
+              Create a new game
             </a>
           </section>
         </Shell>
       )
     }
-    return <Shell wide home="#/host">{error ? <ErrorNote message={error.message} /> : <Loading label="Opening host console…" />}</Shell>
+    return <Shell wide home="#/host">{error ? <ErrorNote error={error} /> : <PageSkeleton />}</Shell>
   }
 
   const ended = data.session.status === 'ended'
   return (
     <Shell wide home="#/host">
       <HostHeader state={data} connection={connection} onEnd={() => act(api.endSession)} busy={busy} />
-      <ErrorNote message={actionError} />
+      <ErrorNote error={actionError} />
       {ended ? (
         <section className="result">
-          <p className="stamp">{data.session.end_reason === 'time_limit' ? 'Time limit reached' : 'Session ended'}</p>
+          <p className="stamp">{data.session.end_reason === 'time_limit' ? 'Time limit reached' : 'Game ended'}</p>
           <h1>{resultHeadline(data.session, data.board)}</h1>
           <p className="muted">
-            {data.board.mysteries_solved} of {data.board.mysteries_played} mysteries solved. Results are kept; no further
-            changes are possible.
+            {data.board.mysteries_solved} of {data.board.mysteries_played} mysteries solved. The results are saved and the
+            game can no longer change.
           </p>
+          <a className="btn btn-primary" href="#/host">
+            Create a new game
+          </a>
         </section>
       ) : null}
       <div className="host-grid">
@@ -118,8 +116,7 @@ function HostHeader({
   const [copied, setCopied] = useState(false)
   const [showLink, setShowLink] = useState(false)
   const s = state.session
-  const joinUrl = routeUrl(`/join/${s.code}`)
-  const message = `Join Friday Games: ${joinUrl} (code ${s.code})`
+  const message = `Join Friday Games: ${routeUrl(`/join/${s.code}`)} (code ${s.code})`
   const copy = async () => {
     const ok = await copyText(message)
     if (ok) {
@@ -130,45 +127,50 @@ function HostHeader({
     setShowLink(true)
   }
   return (
-    <div className="statusbar host-bar">
-      <span className="badge badge-private" title="Do not share this tab on screen">Private host view</span>
-      <span className="code-chip">
-        <span className="code-chip-label">Code</span>
-        <strong>{s.code}</strong>
-      </span>
-      <span className="muted">{s.mode === 'competitive' ? 'Competitive' : `Cooperative, goal ${s.settings.coop_target}`}</span>
-      <span className="spacer" />
-      <ConnectionBadge connection={connection} />
-      <Timer session={s} />
-      <button className="btn" onClick={() => window.open(`#/play/${s.code}`, '_blank', 'noopener')}>
-        Open Player View
-      </button>
-      <button className="btn" onClick={copy}>
-        {copied ? 'Copied!' : 'Copy join link'}
-      </button>
-      {s.status !== 'ended' && (
-        <ConfirmButton
-          className="btn btn-danger"
-          disabled={busy}
-          question="End the game for everyone?"
-          confirmLabel="Yes, end it"
-          onConfirm={onEnd}
-        >
-          End session
-        </ConfirmButton>
-      )}
+    <div className="host-bar">
+      <div className="statusbar">
+        <span className="badge badge-private" title="Don’t share this tab on screen">
+          Private host view
+        </span>
+        <span className="code-chip">
+          <span className="code-chip-label">Code</span>
+          <strong>{s.code}</strong>
+        </span>
+        <span className="muted hide-narrow">
+          {s.mode === 'competitive' ? 'Competitive' : `Cooperative, goal ${s.settings.coop_target}`}
+        </span>
+        <span className="spacer" />
+        <ConnectionBadge connection={connection} />
+        <Timer session={s} />
+      </div>
+      <div className="host-actions">
+        <button className="btn" onClick={() => window.open(`#/play/${s.code}`, '_blank', 'noopener')}>
+          Open Player View
+        </button>
+        <button className="btn" onClick={copy}>
+          {copied ? 'Copied' : 'Copy join link'}
+        </button>
+        {s.status !== 'ended' && (
+          <ConfirmButton
+            className="btn btn-danger"
+            disabled={busy}
+            title={`End game ${s.code} for everyone?`}
+            body="The final scores are saved and nobody can join or score after this."
+            confirmLabel="End game"
+            onConfirm={onEnd}
+          >
+            End game
+          </ConfirmButton>
+        )}
+      </div>
       {showLink && (
         <div className="join-link" role="status">
-          <span className="small">{copied ? 'Copied! Paste it in the Teams chat:' : 'Copy this and paste it in the Teams chat:'}</span>
-          <input
-            readOnly
-            value={message}
-            aria-label="Join message"
-            onFocus={(e) => e.currentTarget.select()}
-            ref={(el) => el?.select()}
-          />
-          <button className="btn btn-small" onClick={() => setShowLink(false)}>
-            Close
+          <label className="field">
+            {copied ? 'Copied. Paste it in the Teams chat:' : 'Copy this message and paste it in the Teams chat:'}
+            <input readOnly value={message} onFocus={(e) => e.currentTarget.select()} ref={(el) => el?.select()} />
+          </label>
+          <button className="btn" onClick={() => setShowLink(false)}>
+            Hide link
           </button>
         </div>
       )}
@@ -209,88 +211,94 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
   const [scorer, setScorer] = useState<string>(coop ? TEAM : '')
   const [showSolution, setShowSolution] = useState(false)
   const [picked, setPicked] = useState('')
+  const [hint, setHint] = useState(false)
 
   const scorerId = scorer === TEAM ? null : scorer || null
-  const scorerName = scorer === TEAM ? 'the team' : players.find((p) => p.id === scorer)?.name
+  const scorerName = scorer === TEAM ? 'the team' : players.find((p) => p.id === scorer)?.name ?? ''
   const needScorer = !coop && !scorerId
   const s = state.session.settings
+
+  // Scoring controls stay clickable; without a chosen player they explain what to do.
+  const score = (fn: () => Promise<unknown>) => {
+    if (needScorer) {
+      setHint(true)
+      document.getElementById('scorer')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return
+    }
+    setHint(false)
+    void act(fn)
+  }
 
   if (!round) {
     const last = state.round
     const next = state.catalog.find((m) => !m.played)
+    const chosen = picked || next?.id || state.catalog[0]?.id
     return (
-      <section className="card">
-        <h2>{last ? 'Next mystery' : 'Start a mystery'}</h2>
+      <section className="sheet">
+        <h2 className="section-title">{last ? 'Choose the next mystery' : 'Choose the first mystery'}</h2>
         {last && (
-          <p className="muted small">
-            Last: “{last.mystery.title}” — {last.solved ? `solved${last.solved_by ? ` by ${last.solved_by}` : ''}` : 'not solved'}.
+          <p className="muted">
+            Last mystery: {last.mystery.title}, {last.solved ? `solved${last.solved_by ? ` by ${last.solved_by}` : ''}` : 'not solved'}.
           </p>
         )}
-        {state.session.status === 'lobby' && (
-          <p className="muted small">The 60-minute timer starts when you start the first mystery.</p>
-        )}
-        <ul className="catalog">
-          {state.catalog.map((m) => (
-            <li key={m.id}>
-              <label className="option">
-                <input
-                  type="radio"
-                  name="mystery"
-                  value={m.id}
-                  checked={(picked || next?.id) === m.id}
-                  onChange={() => setPicked(m.id)}
-                />
-                <span>
-                  <strong>{m.title}</strong>{' '}
-                  <span className="muted small">
-                    {m.category}, {m.difficulty.toLowerCase()}
-                    {m.played && ' (played)'}
+        {state.session.status === 'lobby' && <p className="muted">The 60-minute timer starts when you start the first mystery.</p>}
+        <fieldset>
+          <legend className="sr-only">Mystery</legend>
+          <ul className="catalog">
+            {state.catalog.map((m) => (
+              <li key={m.id}>
+                <label className="option">
+                  <input type="radio" name="mystery" value={m.id} checked={chosen === m.id} onChange={() => setPicked(m.id)} />
+                  <span>
+                    <strong>{m.title}</strong>{' '}
+                    <span className="muted small">
+                      {m.category}, {m.difficulty.toLowerCase()}
+                      {m.played && ' (already played)'}
+                    </span>
                   </span>
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
-        <button
-          className="btn btn-primary"
-          disabled={busy || !(picked || next?.id)}
-          onClick={() => act(() => api.startMystery(picked || next!.id))}
-        >
-          Start mystery
+                </label>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
+        <button className="btn btn-primary" disabled={busy || !chosen} onClick={() => act(() => api.startMystery(chosen!))}>
+          {busy ? 'Starting…' : 'Start mystery'}
         </button>
       </section>
     )
   }
 
   return (
-    <section className="card mystery host-mystery">
+    <section className="sheet host-mystery">
       <div className="host-mystery-head">
         <MysteryImage path={round.mystery.image} className="thumb" />
         <div>
-          <div className="mystery-meta">
-            <span className="pill">Mystery {round.seq}</span>
-            <span className="pill">{round.mystery.category}</span>
-            <span className={`pill diff-${round.mystery.difficulty.toLowerCase()}`}>{round.mystery.difficulty}</span>
-            {round.solved && <span className="pill pill-good">Solved{round.solved_by ? ` by ${round.solved_by}` : ''}</span>}
-            {round.revealed && <span className="pill">Solution shown</span>}
-          </div>
+          <p className="meta">
+            <span>Mystery {round.seq}</span>
+            <span>{round.mystery.category}</span>
+            <span className={`diff diff-${round.mystery.difficulty.toLowerCase()}`}>{round.mystery.difficulty}</span>
+            {round.solved && <span className="status-good">Solved{round.solved_by ? ` by ${round.solved_by}` : ''}</span>}
+            {round.revealed && <span>Solution shown</span>}
+          </p>
           <h2>{round.mystery.title}</h2>
-          <p className="prompt small">{round.mystery.prompt}</p>
+          <p className="prompt">{round.mystery.prompt}</p>
         </div>
       </div>
 
       <div className={`secret ${showSolution ? '' : 'hidden-secret'}`}>
         <div className="secret-head">
-          <strong>Solution (private)</strong>
-          <button className="btn btn-small" onClick={() => setShowSolution((v) => !v)}>
-            {showSolution ? 'Hide' : 'Show'}
+          <strong>Solution, only for you</strong>
+          <button className="btn btn-small" onClick={() => setShowSolution((v) => !v)} aria-expanded={showSolution}>
+            {showSolution ? 'Hide solution' : 'Show solution'}
           </button>
         </div>
         {showSolution ? <p>{round.solution}</p> : <p className="muted small">Hidden in case this tab is on screen.</p>}
       </div>
 
-      <fieldset className="scorer">
-        <legend>Award points to</legend>
+      <div className={`scorer ${hint && needScorer ? 'needs-attention' : ''}`} id="scorer" role="group" aria-labelledby="scorer-label">
+        <p className="scorer-label" id="scorer-label">
+          Who gets the points?
+        </p>
         <div className="chips">
           {coop && (
             <button className={`chip ${scorer === TEAM ? 'chip-on' : ''}`} onClick={() => setScorer(TEAM)} aria-pressed={scorer === TEAM}>
@@ -301,15 +309,23 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
             <button
               key={p.id}
               className={`chip ${scorer === p.id ? 'chip-on' : ''}`}
-              onClick={() => setScorer(p.id)}
+              onClick={() => {
+                setScorer(p.id)
+                setHint(false)
+              }}
               aria-pressed={scorer === p.id}
             >
               {p.name}
             </button>
           ))}
-          {players.length === 0 && <span className="muted small">No players yet — add them on the right.</span>}
+          {players.length === 0 && <span className="muted small">No players yet. Add them in the Players panel.</span>}
         </div>
-      </fieldset>
+        {hint && needScorer && (
+          <p className="field-error" role="alert">
+            Choose who gets the points first.
+          </p>
+        )}
+      </div>
 
       <h3>Clues</h3>
       <ul className="host-clues">
@@ -321,14 +337,12 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
                 <input
                   type="checkbox"
                   checked={awarded}
-                  disabled={busy || (!awarded && needScorer)}
-                  onChange={() =>
-                    act(() => (awarded ? api.revokeClue(c.id) : api.awardClue(c.id, scorerId)))
-                  }
+                  disabled={busy}
+                  onChange={() => (awarded ? void act(() => api.revokeClue(c.id)) : score(() => api.awardClue(c.id, scorerId)))}
                 />
                 <span>
                   {c.text}{' '}
-                  <span className="muted small">
+                  <span className="clue-points">
                     +{c.points}
                     {awarded && `, ${c.award!.player ?? 'team'}`}
                   </span>
@@ -338,39 +352,41 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
           )
         })}
       </ul>
-      {needScorer && <p className="muted small">Pick a player above, then tick the clue they uncovered.</p>}
 
       <h3>Bonuses</h3>
       <div className="row wrap">
-        <button className="btn" disabled={busy || needScorer} onClick={() => act(() => api.awardBonus('partial', scorerId))}>
-          Partial deduction +{s.partial}
+        <button className="btn" disabled={busy} onClick={() => score(() => api.awardBonus('partial', scorerId))}>
+          Award partial +{s.partial}
         </button>
-        <button
-          className="btn btn-good"
-          disabled={busy || needScorer || round.solved}
-          onClick={() => act(() => api.awardBonus('solve', scorerId))}
-        >
-          Solved! +{s.solve}
+        <button className="btn btn-good" disabled={busy || round.solved} onClick={() => score(() => api.awardBonus('solve', scorerId))}>
+          Mark solved +{s.solve}
         </button>
-        <ConfirmButton
-          className="btn btn-warn"
-          disabled={busy || needScorer}
-          question={`${s.wrong_guess} for ${scorerName}?`}
-          confirmLabel="Apply"
-          confirmClassName="btn btn-warn"
-          onConfirm={() => void act(() => api.awardBonus('wrong_guess', scorerId))}
-        >
-          Wrong guess {s.wrong_guess}
-        </ConfirmButton>
+        {needScorer ? (
+          <button className="btn btn-warn" disabled={busy} onClick={() => score(async () => undefined)}>
+            Deduct {Math.abs(s.wrong_guess)} for wrong guess
+          </button>
+        ) : (
+          <ConfirmButton
+            className="btn btn-warn"
+            disabled={busy}
+            title={`Deduct ${Math.abs(s.wrong_guess)} points from ${scorerName}?`}
+            body="Use this when a proposed solution was wrong. You can undo it in the score history."
+            confirmLabel={`Deduct ${Math.abs(s.wrong_guess)} points`}
+            onConfirm={() => void act(() => api.awardBonus('wrong_guess', scorerId))}
+          >
+            Deduct {Math.abs(s.wrong_guess)} for wrong guess
+          </ConfirmButton>
+        )}
       </div>
 
       <h3>Round</h3>
       <div className="row wrap">
         <ConfirmButton
           disabled={busy || round.revealed}
-          question="Show the solution to everyone?"
-          confirmLabel="Reveal"
-          confirmClassName="btn btn-primary"
+          danger={false}
+          title={`Show the solution to “${round.mystery.title}”?`}
+          body="Everyone watching the Player View will see it."
+          confirmLabel="Reveal solution"
           onConfirm={() => void act(api.revealSolution)}
         >
           Reveal solution
@@ -398,6 +414,7 @@ function PlayersPanel({
 }) {
   const [name, setName] = useState('')
   const [spectator, setSpectator] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
   const [linkCodes, setLinkCodes] = useState<Record<string, { code: string; expires: string }>>({})
   const sorted = useMemo(
     () => [...state.board.players].sort((a, b) => a.role.localeCompare(b.role) || a.name.localeCompare(b.name)),
@@ -418,14 +435,14 @@ function PlayersPanel({
           {state.link_requests.map((r) => (
             <div key={r.id} className="request">
               <span>
-                Someone used <strong>{r.player}</strong>’s code. Is it really them?
+                Someone entered <strong>{r.player}</strong>’s code. Is it really them?
               </span>
-              <div className="row">
-                <button className="btn btn-small btn-good" disabled={busy} onClick={() => act(() => api.resolveLink(r.id, true))}>
-                  Yes, link
+              <div className="row wrap">
+                <button className="btn btn-good" disabled={busy} onClick={() => act(() => api.resolveLink(r.id, true))}>
+                  Link {r.player}
                 </button>
-                <button className="btn btn-small" disabled={busy} onClick={() => act(() => api.resolveLink(r.id, false))}>
-                  No
+                <button className="btn" disabled={busy} onClick={() => act(() => api.resolveLink(r.id, false))}>
+                  Reject
                 </button>
               </div>
             </div>
@@ -433,29 +450,39 @@ function PlayersPanel({
         </div>
       )}
 
-      <ul className="players">
-        {sorted.map((p) => (
-          <PlayerRow
-            key={p.id}
-            p={p}
-            busy={busy}
-            disabled={disabled}
-            linkCode={linkCodes[p.id]}
-            onRename={(n) => act(() => api.renamePlayer(p.id, n))}
-            onRole={() => act(() => api.setRole(p.id, p.role === 'player' ? 'spectator' : 'player'))}
-            onRemove={() => void act(() => api.removePlayer(p.id))}
-            onLinkCode={() => makeCode(p)}
-          />
-        ))}
-        {sorted.length === 0 && <li className="muted small">Nobody yet. Share the code, or add people below.</li>}
-      </ul>
+      {sorted.length === 0 ? (
+        <div className="empty">
+          <h3>No players yet</h3>
+          <p className="muted small">Players appear here as soon as they join with the code. Add anyone who can’t open the link below.</p>
+        </div>
+      ) : (
+        <ul className="players">
+          {sorted.map((p) => (
+            <PlayerRow
+              key={p.id}
+              p={p}
+              busy={busy}
+              disabled={disabled}
+              linkCode={linkCodes[p.id]}
+              onRename={(n) => act(() => api.renamePlayer(p.id, n))}
+              onRole={() => act(() => api.setRole(p.id, p.role === 'player' ? 'spectator' : 'player'))}
+              onRemove={() => void act(() => api.removePlayer(p.id))}
+              onLinkCode={() => makeCode(p)}
+            />
+          ))}
+        </ul>
+      )}
 
       {!disabled && (
         <form
           className="add-player"
+          noValidate
           onSubmit={(e) => {
             e.preventDefault()
-            if (!name.trim()) return
+            if (!name.trim()) {
+              setNameError('Enter a name to add a player.')
+              return
+            }
             void act(async () => {
               await api.addPlayer(name, spectator)
               setName('')
@@ -464,13 +491,29 @@ function PlayersPanel({
         >
           <label className="field">
             Add someone without the web app
-            <input value={name} maxLength={24} placeholder="Name" onChange={(e) => setName(e.target.value)} />
+            <input
+              value={name}
+              maxLength={24}
+              autoComplete="off"
+              aria-invalid={Boolean(nameError)}
+              aria-describedby={nameError ? 'add-name-error' : undefined}
+              onBlur={() => setNameError(null)}
+              onChange={(e) => {
+                setName(e.target.value)
+                setNameError(null)
+              }}
+            />
+            {nameError && (
+              <span className="field-error" id="add-name-error">
+                {nameError}
+              </span>
+            )}
           </label>
-          <label className="check small">
-            <input type="checkbox" checked={spectator} onChange={(e) => setSpectator(e.target.checked)} /> Spectator
+          <label className="check">
+            <input type="checkbox" checked={spectator} onChange={(e) => setSpectator(e.target.checked)} /> Add as a spectator
           </label>
-          <button type="submit" className="btn" disabled={busy || !name.trim()}>
-            Add
+          <button type="submit" className="btn" disabled={busy}>
+            Add player
           </button>
         </form>
       )}
@@ -499,27 +542,27 @@ function PlayerRow({
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(p.name)
+  const save = () => {
+    if (draft.trim() && draft.trim() !== p.name) onRename(draft)
+    setEditing(false)
+  }
   return (
     <li className="player">
-      {editing ? (
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault()
-            onRename(draft)
-            setEditing(false)
-          }}
-        >
-          <input aria-label={`New name for ${p.name}`} value={draft} maxLength={24} autoFocus onChange={(e) => setDraft(e.target.value)} />
-          <button className="btn btn-small" type="submit">
-            Save
-          </button>
-          <button className="btn btn-small" type="button" onClick={() => setEditing(false)}>
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <div className="player-line">
+      {/* Name and rename input share one reserved box, so nothing moves while editing */}
+      <div className="player-name">
+        {editing ? (
+          <input
+            aria-label={`New name for ${p.name}`}
+            value={draft}
+            maxLength={24}
+            autoFocus
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save()
+              if (e.key === 'Escape') setEditing(false)
+            }}
+          />
+        ) : (
           <span>
             <strong>{p.name}</strong>{' '}
             <span className="muted small">
@@ -527,37 +570,59 @@ function PlayerRow({
               {p.join_method === 'manual' && (p.linked ? ', linked' : ', added by host')}
             </span>
           </span>
-          {!disabled && (
-            <span className="row">
-              <button className="btn btn-small" disabled={busy} onClick={() => { setDraft(p.name); setEditing(true) }}>
-                Rename
-              </button>
-              <button className="btn btn-small" disabled={busy} onClick={onRole}>
-                {p.role === 'player' ? 'Make spectator' : 'Make player'}
-              </button>
-              {p.join_method === 'manual' && !p.linked && (
-                <button className="btn btn-small" disabled={busy} onClick={onLinkCode}>
-                  Link code
-                </button>
-              )}
-              <ConfirmButton
-                className="btn btn-small btn-danger"
-                confirmClassName="btn btn-small btn-danger"
-                disabled={busy}
-                question={`Remove ${p.name}?`}
-                confirmLabel="Remove"
-                onConfirm={onRemove}
-              >
-                Remove
-              </ConfirmButton>
-            </span>
+        )}
+      </div>
+      {!disabled && (
+        <div className="player-actions">
+          {/* Same buttons in both modes, so the row never changes shape while renaming */}
+          {editing ? (
+            <button className="btn btn-small btn-primary" onClick={save}>
+              Save name
+            </button>
+          ) : (
+            <button
+              className="btn btn-small"
+              disabled={busy}
+              onClick={() => {
+                setDraft(p.name)
+                setEditing(true)
+              }}
+            >
+              Rename
+            </button>
           )}
+          {editing ? (
+            <button className="btn btn-small" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+          ) : (
+            <button className="btn btn-small" disabled={busy} onClick={onRole}>
+              {p.role === 'player' ? 'Make spectator' : 'Make player'}
+            </button>
+          )}
+          {p.join_method === 'manual' && !p.linked && (
+            <button className="btn btn-small" disabled={busy || editing} onClick={onLinkCode}>
+              Create link code
+            </button>
+          )}
+          <ConfirmButton
+            className="btn btn-small btn-danger"
+            disabled={busy || editing}
+            title={`Remove ${p.name} from the game?`}
+            body="Their points stop counting and their screen stops updating. Their name becomes free again."
+            confirmLabel={`Remove ${p.name}`}
+            onConfirm={onRemove}
+          >
+            Remove
+          </ConfirmButton>
         </div>
       )}
       {linkCode && !p.linked && (
         <p className="linkcode small">
-          Send privately to {p.name}: <strong className="mono">{linkCode.code}</strong>{' '}
-          <span className="muted">(valid until {new Date(linkCode.expires).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+          Send privately to {p.name}: <strong>{linkCode.code}</strong>{' '}
+          <span className="muted">
+            (valid until {new Date(linkCode.expires).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+          </span>
         </p>
       )}
     </li>
@@ -582,10 +647,10 @@ function EventLog({ events, api, act, disabled }: { events: ScoreEvent[]; api: H
           <li key={e.id} className={e.reversed ? 'struck' : ''}>
             <span className="muted small">{new Date(e.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>{' '}
             <strong>{e.amount > 0 ? `+${e.amount}` : e.amount}</strong> {REASON[e.reason]}, {e.player ?? 'team'}
-            {e.clue && <span className="muted small"> — {e.clue}</span>}
+            {e.clue && <span className="muted small"> ({e.clue})</span>}
             {!disabled && !e.reversed && ['partial', 'solve', 'wrong_guess'].includes(e.reason) && (
               <button className="btn btn-small" onClick={() => act(() => api.reverseEvent(e.id))}>
-                Undo
+                Undo score
               </button>
             )}
           </li>

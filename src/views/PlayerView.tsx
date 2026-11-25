@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ConnectionBadge, ErrorNote, Loading, Scoreboard, Shell, Timer } from '../components/common'
+import { ConnectionBadge, ErrorNote, PageSkeleton, Scoreboard, Shell, Timer } from '../components/common'
 import { MysteryImage } from '../components/MysteryImage'
 import { getPublicState, whoami } from '../lib/api'
 import { resultHeadline } from '../lib/game'
@@ -33,13 +33,13 @@ export default function PlayerView({ code }: { code: string }) {
               the current link.
             </p>
             <a className="btn btn-primary" href="#/">
-              Enter another code
+              Enter a different code
             </a>
           </section>
         ) : error ? (
-          <ErrorNote message={error.message} />
+          <ErrorNote error={error} />
         ) : (
-          <Loading label="Opening the case file…" />
+          <PageSkeleton />
         )}
       </Shell>
     )
@@ -88,13 +88,13 @@ export default function PlayerView({ code }: { code: string }) {
         ) : (
           <article className="sheet mystery" aria-live="polite">
             <MysteryImage path={round.mystery.image} className="mystery-art" />
-            <div className="mystery-meta">
-              <span className="pill">Mystery {round.seq}</span>
-              <span className="pill">{round.mystery.category}</span>
-              <span className={`pill diff-${round.mystery.difficulty.toLowerCase()}`}>{round.mystery.difficulty}</span>
-              {round.solved && <span className="pill pill-good">Solved{round.solved_by ? ` by ${round.solved_by}` : ''}</span>}
-              {round.status === 'closed' && !round.solved && <span className="pill">Closed</span>}
-            </div>
+            <p className="meta">
+              <span>Mystery {round.seq}</span>
+              <span>{round.mystery.category}</span>
+              <span className={`diff diff-${round.mystery.difficulty.toLowerCase()}`}>{round.mystery.difficulty}</span>
+              {round.solved && <span className="status-good">Solved{round.solved_by ? ` by ${round.solved_by}` : ''}</span>}
+              {round.status === 'closed' && !round.solved && <span>Closed</span>}
+            </p>
             <h1 className="mystery-title">{round.mystery.title}</h1>
             <p className="prompt">{round.mystery.prompt}</p>
 
