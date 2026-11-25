@@ -365,3 +365,6 @@ textarea { resize: vertical; line-height: 1.55; }
 .open-code { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; letter-spacing: 0.14em; }
 .btn-light { background: var(--highlight); border-color: var(--highlight); color: var(--ink); }
 .btn-light:hover:not(:disabled) { border-color: #fff; }
+
+.confirm { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 4px 4px 12px; border-radius: 14px; background: #fdeef1; }
+.confirm-q { font-weight: 600; font-size: 0.9rem; color: #8f1427; }

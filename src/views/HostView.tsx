@@ -3,6 +3,7 @@ import { ConnectionBadge, ErrorNote, Loading, Scoreboard, Shell, Timer } from '.
 import { GameError, hostApi, type HostApi } from '../lib/api'
 import { resultHeadline } from '../lib/game'
 import { routeUrl } from '../lib/router'
+import { ConfirmButton } from '../components/ConfirmButton'
 import { MysteryImage } from '../components/MysteryImage'
 import { hostCredential } from '../lib/storage'
 import type { BoardPlayer, HostState, ScoreEvent } from '../lib/types'
@@ -146,15 +147,15 @@ function HostHeader({
         {copied ? 'Copied!' : 'Copy join link'}
       </button>
       {s.status !== 'ended' && (
-        <button
+        <ConfirmButton
           className="btn btn-danger"
           disabled={busy}
-          onClick={() => {
-            if (window.confirm('End the session for everyone? Final scores are kept and no more changes are possible.')) onEnd()
-          }}
+          question="End the game for everyone?"
+          confirmLabel="Yes, end it"
+          onConfirm={onEnd}
         >
           End session
-        </button>
+        </ConfirmButton>
       )}
       {showLink && (
         <div className="join-link" role="status">
@@ -351,29 +352,29 @@ function MysteryPanel({ state, api, act, busy }: { state: HostState; api: HostAp
         >
           Solved! +{s.solve}
         </button>
-        <button
+        <ConfirmButton
           className="btn btn-warn"
           disabled={busy || needScorer}
-          onClick={() => {
-            if (window.confirm(`Apply ${s.wrong_guess} for a wrong solution to ${scorerName}?`))
-              void act(() => api.awardBonus('wrong_guess', scorerId))
-          }}
+          question={`${s.wrong_guess} for ${scorerName}?`}
+          confirmLabel="Apply"
+          confirmClassName="btn btn-warn"
+          onConfirm={() => void act(() => api.awardBonus('wrong_guess', scorerId))}
         >
           Wrong guess {s.wrong_guess}
-        </button>
+        </ConfirmButton>
       </div>
 
       <h3>Round</h3>
       <div className="row wrap">
-        <button
-          className="btn"
+        <ConfirmButton
           disabled={busy || round.revealed}
-          onClick={() => {
-            if (window.confirm('Show the solution on the Player View?')) void act(api.revealSolution)
-          }}
+          question="Show the solution to everyone?"
+          confirmLabel="Reveal"
+          confirmClassName="btn btn-primary"
+          onConfirm={() => void act(api.revealSolution)}
         >
           Reveal solution
-        </button>
+        </ConfirmButton>
         <button className="btn btn-primary" disabled={busy} onClick={() => act(api.closeMystery)}>
           Close mystery
         </button>
@@ -442,9 +443,7 @@ function PlayersPanel({
             linkCode={linkCodes[p.id]}
             onRename={(n) => act(() => api.renamePlayer(p.id, n))}
             onRole={() => act(() => api.setRole(p.id, p.role === 'player' ? 'spectator' : 'player'))}
-            onRemove={() => {
-              if (window.confirm(`Remove ${p.name}? Their points will no longer count.`)) void act(() => api.removePlayer(p.id))
-            }}
+            onRemove={() => void act(() => api.removePlayer(p.id))}
             onLinkCode={() => makeCode(p)}
           />
         ))}
@@ -541,9 +540,16 @@ function PlayerRow({
                   Link code
                 </button>
               )}
-              <button className="btn btn-small btn-danger" disabled={busy} onClick={onRemove}>
+              <ConfirmButton
+                className="btn btn-small btn-danger"
+                confirmClassName="btn btn-small btn-danger"
+                disabled={busy}
+                question={`Remove ${p.name}?`}
+                confirmLabel="Remove"
+                onConfirm={onRemove}
+              >
                 Remove
-              </button>
+              </ConfirmButton>
             </span>
           )}
         </div>

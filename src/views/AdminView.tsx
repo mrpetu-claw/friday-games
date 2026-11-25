@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ErrorNote, Loading, Shell } from '../components/common'
+import { ConfirmButton } from '../components/ConfirmButton'
 import { MysteryImage } from '../components/MysteryImage'
 import { adminApi, GameError } from '../lib/api'
 import { adminKey } from '../lib/storage'
@@ -320,11 +321,12 @@ function MysteryForm({
             <section className="card">
               <h2>Delete</h2>
               <p className="muted small">This mystery has never been played, so it can be deleted completely.</p>
-              <button
+              <ConfirmButton
                 className="btn btn-danger"
                 disabled={busy}
-                onClick={async () => {
-                  if (!window.confirm(`Delete “${m.title}” permanently? This can’t be undone.`)) return
+                question="Delete it permanently?"
+                confirmLabel="Yes, delete"
+                onConfirm={async () => {
                   setBusy(true)
                   try {
                     await api.remove(m.id!)
@@ -336,7 +338,7 @@ function MysteryForm({
                 }}
               >
                 Delete mystery
-              </button>
+              </ConfirmButton>
             </section>
           )}
         </div>
