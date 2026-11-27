@@ -1,3 +1,4 @@
+import { Crown, Timer as TimerIcon, Wifi, WifiOff } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { GameError } from '../lib/api'
 import { clockOffset, formatClock, rankPlayers, remainingMs } from '../lib/game'
@@ -9,20 +10,30 @@ export function Timer({ session }: { session: SessionInfo }) {
   const [offset] = useState(() => clockOffset(session))
   const ms = remainingMs(session, offset, now)
   if (session.status === 'ended') return <span className="timer muted">Ended</span>
-  if (ms === null) return <span className="timer muted" aria-label="Timer not started">60:00</span>
+  if (ms === null)
+    return (
+      <span className="timer muted" aria-label="Timer not started">
+        <TimerIcon size={18} aria-hidden="true" /> 60:00
+      </span>
+    )
   const low = ms < 5 * 60 * 1000
   return (
     <span className={`timer ${low ? 'timer-low' : ''}`} role="timer" aria-label={`${formatClock(ms)} remaining`}>
-      {formatClock(ms)}
+      <TimerIcon size={18} aria-hidden="true" /> {formatClock(ms)}
     </span>
   )
 }
 
 export function ConnectionBadge({ connection }: { connection: Connection }) {
-  if (connection === 'live') return <span className="badge badge-live" title="Live updates on">● Live</span>
+  if (connection === 'live')
+    return (
+      <span className="badge badge-live" title="Live updates on">
+        <Wifi size={14} aria-hidden="true" /> Live
+      </span>
+    )
   return (
     <span className="badge badge-warn" title="Trying to reconnect; updates may be delayed">
-      ● {connection === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
+      <WifiOff size={14} aria-hidden="true" /> {connection === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
     </span>
   )
 }
@@ -68,7 +79,7 @@ export function Scoreboard({
         <ol className="board">
           {ranked.map((p) => (
             <li key={p.id} className={p.id === highlightId ? 'me' : ''}>
-              <span className="rank">{p.rank}</span>
+              <span className="rank">{p.rank === 1 && p.score > 0 ? <Crown size={18} aria-label="1st" /> : p.rank}</span>
               <span className="name">
                 {p.name}
                 {p.id === highlightId && <span className="you"> (you)</span>}

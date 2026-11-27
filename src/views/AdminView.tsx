@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowLeft, ArrowUp, Plus, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { ErrorNote, Loading, Shell } from '../components/common'
 import { ConfirmButton } from '../components/ConfirmButton'
@@ -172,7 +173,7 @@ function StoryEditor({ api, onLogout }: { api: ReturnType<typeof adminApi>; onLo
         <h1>Stories</h1>
         <div className="row wrap">
           <button className="btn btn-primary" onClick={() => setEditing(readDraft() ?? structuredClone(EMPTY))}>
-            New mystery
+            <Plus size={18} aria-hidden="true" /> New mystery
           </button>
           <button className="btn" onClick={onLogout}>
             Lock editor
@@ -184,7 +185,10 @@ function StoryEditor({ api, onLogout }: { api: ReturnType<typeof adminApi>; onLo
       <div className="list-tools">
         <label className="field search-field">
           Search stories
-          <input type="search" value={query} placeholder="e.g. lighthouse" onChange={(e) => setQuery(e.target.value)} />
+          <span className="search-input">
+            <Search size={18} aria-hidden="true" />
+            <input type="search" value={query} placeholder="e.g. lighthouse" onChange={(e) => setQuery(e.target.value)} />
+          </span>
         </label>
         <div className="tabs" role="tablist" aria-label="Show">
           {(['active', 'archived', 'all'] as const).map((f) => (
@@ -349,7 +353,7 @@ function MysteryForm({
       <div className="list-head">
         <div>
           <button className="btn btn-small" onClick={onClose}>
-            Back to stories
+            <ArrowLeft size={16} aria-hidden="true" /> Back to stories
           </button>
           <h1>{isNew ? 'New mystery' : m.title || 'Untitled'}</h1>
         </div>
@@ -449,7 +453,7 @@ function MysteryForm({
                   </label>
                   <span className="clue-tools">
                     <button className="icon-btn" aria-label={`Move clue ${i + 1} up`} data-tip="Move up" disabled={i === 0} onClick={() => moveClue(i, -1)}>
-                      ↑
+                      <ArrowUp size={18} aria-hidden="true" />
                     </button>
                     <button
                       className="icon-btn"
@@ -458,7 +462,7 @@ function MysteryForm({
                       disabled={i === m.clues.length - 1}
                       onClick={() => moveClue(i, 1)}
                     >
-                      ↓
+                      <ArrowDown size={18} aria-hidden="true" />
                     </button>
                     <button
                       className="icon-btn icon-btn-danger"
@@ -467,7 +471,7 @@ function MysteryForm({
                       disabled={m.clues.length <= 3}
                       onClick={() => set('clues', m.clues.filter((_, j) => j !== i))}
                     >
-                      ✕
+                      <X size={18} aria-hidden="true" />
                     </button>
                   </span>
                 </li>

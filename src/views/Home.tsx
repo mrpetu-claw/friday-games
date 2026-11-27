@@ -1,3 +1,4 @@
+import { ArrowRight, Highlighter, MessageCircleQuestion, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CodeInput } from '../components/CodeInput'
 import { ErrorNote, Shell } from '../components/common'
@@ -7,44 +8,94 @@ import { go } from '../lib/router'
 import { hostCredential, playerToken, recentHostedCodes } from '../lib/storage'
 import type { Mode } from '../lib/types'
 
-/** #/ — what players get: just enter the code. */
+/** #/ — what players get: just enter the code. Page pattern: Form (with a hero). */
 export function PlayerHome() {
   const [code, setCode] = useState('')
   const [codeError, setCodeError] = useState<string | null>(null)
   const message = 'Enter the 6-character code from the Teams chat.'
+  const art = (n: string) => `${import.meta.env.BASE_URL}mysteries/${n}.webp`
   return (
-    <Shell>
-      <section className="sheet narrow join-sheet">
-        <h1>Join the game</h1>
-        <p className="lead">Enter the code your host shared in the Teams chat.</p>
-        <form
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (code.length !== 6) {
-              setCodeError(message)
-              document.getElementById('game-code')?.focus()
-              return
-            }
-            // Already joined this game from this browser? Go straight back in.
-            go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
-          }}
-        >
-          <CodeInput
-            value={code}
-            autoFocus
-            error={codeError ?? undefined}
-            onChange={(v) => {
-              setCode(v)
-              setCodeError(null)
+    <Shell wide>
+      <div className="landing">
+        <section className="landing-copy">
+          <h1 className="landing-title">
+            Crack the case.
+            <br />
+            Together.
+          </h1>
+          <p className="lead">
+            Short, strange mysteries for your Friday call. Ask the host yes-or-no questions, uncover the clues and be the
+            first to explain what really happened.
+          </p>
+
+          <form
+            className="landing-form sheet"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (code.length !== 6) {
+                setCodeError(message)
+                document.getElementById('game-code')?.focus()
+                return
+              }
+              // Already joined this game from this browser? Go straight back in.
+              go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
             }}
-            onBlur={() => setCodeError(code.length > 0 && code.length < 6 ? message : null)}
-          />
-          <button type="submit" className="btn btn-primary btn-large btn-block">
-            Join game
-          </button>
-        </form>
-      </section>
+          >
+            <CodeInput
+              value={code}
+              autoFocus
+              label="Game code from the Teams chat"
+              error={codeError ?? undefined}
+              onChange={(v) => {
+                setCode(v)
+                setCodeError(null)
+              }}
+              onBlur={() => setCodeError(code.length > 0 && code.length < 6 ? message : null)}
+            />
+            <button type="submit" className="btn btn-primary btn-large btn-block">
+              Join game <ArrowRight size={20} aria-hidden="true" />
+            </button>
+          </form>
+
+          <ol className="how-to">
+            <li>
+              <MessageCircleQuestion size={20} aria-hidden="true" />
+              <span>
+                <strong>Ask</strong> yes-or-no questions
+              </span>
+            </li>
+            <li>
+              <Highlighter size={20} aria-hidden="true" />
+              <span>
+                <strong>Uncover</strong> clues for points
+              </span>
+            </li>
+            <li>
+              <Trophy size={20} aria-hidden="true" />
+              <span>
+                <strong>Solve</strong> it for the big bonus
+              </span>
+            </li>
+          </ol>
+        </section>
+
+        <div className="case-stack" aria-hidden="true">
+          <figure className="case-photo case-photo-1">
+            <img src={art('ms-006')} alt="" width={800} height={450} />
+            <figcaption>The Desert Ship</figcaption>
+          </figure>
+          <figure className="case-photo case-photo-2">
+            <img src={art('ms-001')} alt="" width={800} height={450} />
+            <figcaption>The Bakery Alarm</figcaption>
+          </figure>
+          <figure className="case-photo case-photo-3">
+            <img src={art('ms-003')} alt="" width={800} height={450} />
+            <figcaption>The Dark Lighthouse</figcaption>
+          </figure>
+          <span className="case-tag">Case file</span>
+        </div>
+      </div>
     </Shell>
   )
 }

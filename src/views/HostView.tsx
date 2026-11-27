@@ -1,3 +1,4 @@
+import { Copy, ExternalLink, Flag } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ConnectionBadge, ErrorNote, PageSkeleton, Scoreboard, Shell, Timer } from '../components/common'
 import { ConfirmButton } from '../components/ConfirmButton'
@@ -145,10 +146,10 @@ function HostHeader({
       </div>
       <div className="host-actions">
         <button className="btn" onClick={() => window.open(`#/play/${s.code}`, '_blank', 'noopener')}>
-          Open Player View
+          <ExternalLink size={18} aria-hidden="true" /> Open Player View
         </button>
         <button className="btn" onClick={copy}>
-          {copied ? 'Copied' : 'Copy join link'}
+          <Copy size={18} aria-hidden="true" /> {copied ? 'Copied' : 'Copy join link'}
         </button>
         {s.status !== 'ended' && (
           <ConfirmButton
@@ -159,7 +160,7 @@ function HostHeader({
             confirmLabel="End game"
             onConfirm={onEnd}
           >
-            End game
+            <Flag size={18} aria-hidden="true" /> End game
           </ConfirmButton>
         )}
       </div>
