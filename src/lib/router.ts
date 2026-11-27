@@ -15,6 +15,7 @@ export type Route =
   | { name: 'play'; code: string }
   | { name: 'join'; code: string }
   | { name: 'admin' }
+  | { name: 'how' }
 
 export function parseRoute(hash: string): Route {
   const [, view, code = ''] = hash.replace(/^#/, '').split('/')
@@ -24,6 +25,7 @@ export function parseRoute(hash: string): Route {
   if (view === 'play' && c) return { name: 'play', code: c }
   if (view === 'join') return { name: 'join', code: c }
   if (view === 'admin') return { name: 'admin' }
+  if (view === 'how') return { name: 'how' }
   return { name: 'home' }
 }
 

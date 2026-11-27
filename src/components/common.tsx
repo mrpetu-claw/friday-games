@@ -1,4 +1,4 @@
-import { Crown, Timer as TimerIcon, Wifi, WifiOff } from 'lucide-react'
+import { Crown, Search, Timer as TimerIcon, Wifi, WifiOff } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { GameError } from '../lib/api'
 import { clockOffset, formatClock, rankPlayers, remainingMs } from '../lib/game'
@@ -99,19 +99,54 @@ export function Scoreboard({
   )
 }
 
-export function Shell({ children, wide, home = '#/' }: { children: ReactNode; wide?: boolean; home?: string }) {
+export function Shell({
+  children,
+  wide,
+  home = '#/',
+  hero,
+}: {
+  children: ReactNode
+  wide?: boolean
+  home?: string
+  hero?: ReactNode
+}) {
+  const hash = typeof window === 'undefined' ? '' : window.location.hash || '#/'
+  const hostSide = home === '#/host'
+  const links = hostSide
+    ? [
+        { href: '#/host', label: 'Host a game', active: hash === '#/host' || hash.startsWith('#/host/') },
+        { href: '#/admin', label: 'Stories', active: hash.startsWith('#/admin') },
+      ]
+    : [
+        { href: '#/', label: 'Join a game', active: hash === '#/' || hash === '' || hash.startsWith('#/join') },
+        { href: '#/how', label: 'How to play', active: hash.startsWith('#/how') },
+      ]
   return (
     <div className="app">
       <a className="skip-link" href="#main">
         Skip to content
       </a>
       <header className="topbar">
-        <div className={`page ${wide ? 'page-wide' : ''}`}>
+        <nav className="page page-wide topnav" aria-label="Main">
           <a href={home} className="brand">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={28} height={28} /> Friday Games
+            <Search size={28} strokeWidth={2.25} aria-hidden="true" />
+            <span>Friday Games</span>
           </a>
-        </div>
+          <ul className="navlinks">
+            {links.map((l) => (
+              <li key={l.href}>
+                <a href={l.href} aria-current={l.active ? 'page' : undefined} className={l.active ? 'active' : ''}>
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a className="btn btn-primary btn-small nav-cta" href={hostSide ? '#/' : '#/host'}>
+            {hostSide ? 'Join as player' : 'Host a game'}
+          </a>
+        </nav>
       </header>
+      {hero}
       <main id="main" tabIndex={-1} className={`page ${wide ? 'page-wide' : ''}`}>
         {children}
       </main>

@@ -2,7 +2,7 @@ import { Shell } from './components/common'
 import { isConfigured } from './lib/supabase'
 import { useRoute } from './lib/router'
 import AdminView from './views/AdminView'
-import { HostHome, PlayerHome } from './views/Home'
+import { HostHome, HowToPlay, PlayerHome } from './views/Home'
 import HostView from './views/HostView'
 import JoinView from './views/JoinView'
 import PlayerView from './views/PlayerView'
@@ -31,6 +31,8 @@ export default function App() {
       return <PlayerView key={route.code} code={route.code} />
     case 'hostHome':
       return <HostHome />
+    case 'how':
+      return <HowToPlay />
     case 'admin':
       return <AdminView />
     case 'join':

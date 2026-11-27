@@ -1,4 +1,4 @@
-import { ArrowRight, Highlighter, MessageCircleQuestion, Trophy } from 'lucide-react'
+import { ArrowRight, BarChart3, Clock, MessageCircleQuestion, Puzzle, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CodeInput } from '../components/CodeInput'
 import { ErrorNote, Shell } from '../components/common'
@@ -8,94 +8,142 @@ import { go } from '../lib/router'
 import { hostCredential, playerToken, recentHostedCodes } from '../lib/storage'
 import type { Mode } from '../lib/types'
 
-/** #/ — what players get: just enter the code. Page pattern: Form (with a hero). */
+const FEATURED = [
+  { img: 'ms-003', title: 'The Dark Lighthouse', teaser: 'A keeper switches off his light on the stormiest night of the year, and is called a hero.', difficulty: 'Hard', time: '~15 min' },
+  { img: 'ms-004', title: 'The Empty Box', teaser: 'A jeweller pays £500 to receive a perfectly empty box, and calls it money well spent.', difficulty: 'Medium', time: '~10 min' },
+  { img: 'ms-006', title: 'The Desert Ship', teaser: 'A full-sized sailing ship stands in a desert town square. Nobody carried it there.', difficulty: 'Hard', time: '~15 min' },
+]
+
+/** #/ — what players get. Page pattern: marketing landing with the join form in the hero. */
 export function PlayerHome() {
   const [code, setCode] = useState('')
   const [codeError, setCodeError] = useState<string | null>(null)
   const message = 'Enter the 6-character code from the Teams chat.'
   const art = (n: string) => `${import.meta.env.BASE_URL}mysteries/${n}.webp`
-  return (
-    <Shell wide>
-      <div className="landing">
-        <section className="landing-copy">
-          <h1 className="landing-title">
-            Crack the case.
-            <br />
-            Together.
-          </h1>
-          <p className="lead">
-            Short, strange mysteries for your Friday call. Ask the host yes-or-no questions, uncover the clues and be the
-            first to explain what really happened.
-          </p>
 
-          <form
-            className="landing-form sheet"
-            noValidate
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (code.length !== 6) {
-                setCodeError(message)
-                document.getElementById('game-code')?.focus()
-                return
-              }
-              // Already joined this game from this browser? Go straight back in.
-              go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
+  const hero = (
+    <section className="hero-noir" style={{ ['--hero-img' as string]: `url(${new URL(art('ms-004'), window.location.href).href})` }}>
+      <div className="page page-wide hero-inner">
+        <p className="kicker">A team mystery game for Friday calls</p>
+        <h1 className="hero-title">Solve the Case</h1>
+        <p className="hero-sub">
+          Ask the host yes-or-no questions, uncover the clues and piece together the truth. Can your team crack it before
+          the clock runs out?
+        </p>
+        <form
+          className="hero-join"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (code.length !== 6) {
+              setCodeError(message)
+              document.getElementById('game-code')?.focus()
+              return
+            }
+            go(playerToken.get(code) ? `/play/${code}` : `/join/${code}`)
+          }}
+        >
+          <CodeInput
+            value={code}
+            autoFocus
+            label="Enter the game code from the Teams chat"
+            error={codeError ?? undefined}
+            onChange={(v) => {
+              setCode(v)
+              setCodeError(null)
             }}
-          >
-            <CodeInput
-              value={code}
-              autoFocus
-              label="Game code from the Teams chat"
-              error={codeError ?? undefined}
-              onChange={(v) => {
-                setCode(v)
-                setCodeError(null)
-              }}
-              onBlur={() => setCodeError(code.length > 0 && code.length < 6 ? message : null)}
-            />
-            <button type="submit" className="btn btn-primary btn-large btn-block">
-              Join game <ArrowRight size={20} aria-hidden="true" />
-            </button>
-          </form>
-
-          <ol className="how-to">
-            <li>
-              <MessageCircleQuestion size={20} aria-hidden="true" />
-              <span>
-                <strong>Ask</strong> yes-or-no questions
-              </span>
-            </li>
-            <li>
-              <Highlighter size={20} aria-hidden="true" />
-              <span>
-                <strong>Uncover</strong> clues for points
-              </span>
-            </li>
-            <li>
-              <Trophy size={20} aria-hidden="true" />
-              <span>
-                <strong>Solve</strong> it for the big bonus
-              </span>
-            </li>
-          </ol>
-        </section>
-
-        <div className="case-stack" aria-hidden="true">
-          <figure className="case-photo case-photo-1">
-            <img src={art('ms-006')} alt="" width={800} height={450} />
-            <figcaption>The Desert Ship</figcaption>
-          </figure>
-          <figure className="case-photo case-photo-2">
-            <img src={art('ms-001')} alt="" width={800} height={450} />
-            <figcaption>The Bakery Alarm</figcaption>
-          </figure>
-          <figure className="case-photo case-photo-3">
-            <img src={art('ms-003')} alt="" width={800} height={450} />
-            <figcaption>The Dark Lighthouse</figcaption>
-          </figure>
-          <span className="case-tag">Case file</span>
-        </div>
+            onBlur={() => setCodeError(code.length > 0 && code.length < 6 ? message : null)}
+          />
+          <button type="submit" className="btn btn-primary btn-large btn-block">
+            Join the case <ArrowRight size={20} aria-hidden="true" />
+          </button>
+        </form>
       </div>
+    </section>
+  )
+
+  return (
+    <Shell wide hero={hero}>
+      <ul className="features">
+        <li>
+          <MessageCircleQuestion size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Ask questions</h2>
+            <p>Only yes or no. Every answer narrows it down.</p>
+          </div>
+        </li>
+        <li>
+          <Search size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Find clues</h2>
+            <p>Uncover the key facts and score points for each one.</p>
+          </div>
+        </li>
+        <li>
+          <Puzzle size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Solve the mystery</h2>
+            <p>Put the pieces together and reveal what really happened.</p>
+          </div>
+        </li>
+      </ul>
+
+      <section className="featured">
+        <h2 className="featured-title">Case files</h2>
+        <div className="case-cards">
+          {FEATURED.map((c) => (
+            <article key={c.title} className="case-card">
+              <img src={art(c.img)} alt="" width={800} height={450} loading="lazy" />
+              <div className="case-card-body">
+                <h3>{c.title}</h3>
+                <p>{c.teaser}</p>
+                <p className="case-card-meta">
+                  <span>
+                    <BarChart3 size={16} aria-hidden="true" /> {c.difficulty}
+                  </span>
+                  <span>
+                    <Clock size={16} aria-hidden="true" /> {c.time}
+                  </span>
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <p className="featured-note">Your host picks the cases. Bring a sharp mind and a good question.</p>
+      </section>
+    </Shell>
+  )
+}
+
+/** #/how — rules for players. Page pattern: Detail. */
+export function HowToPlay() {
+  return (
+    <Shell>
+      <section className="sheet how">
+        <p className="kicker">How to play</p>
+        <h1>Four steps to crack a case</h1>
+        <ol className="steps">
+          <li>
+            <h2>Join with the code</h2>
+            <p>Your host shares a 6-character code in the Teams chat. Enter it with your name. No account needed.</p>
+          </li>
+          <li>
+            <h2>Read the case</h2>
+            <p>A strange situation appears on the shared screen. Something doesn’t add up.</p>
+          </li>
+          <li>
+            <h2>Ask yes-or-no questions</h2>
+            <p>The host only answers yes, no or irrelevant. When you uncover a key fact, it lights up as a clue and you score points.</p>
+          </li>
+          <li>
+            <h2>Solve it</h2>
+            <p>Think you know what happened? Say it. A full solution scores the big bonus; a wrong guess may cost you.</p>
+          </li>
+        </ol>
+        <a className="btn btn-primary btn-large" href="#/">
+          Join a game <ArrowRight size={20} aria-hidden="true" />
+        </a>
+      </section>
     </Shell>
   )
 }
