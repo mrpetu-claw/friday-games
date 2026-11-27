@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Clock, MessageCircleQuestion, Puzzle, Search } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Clock, Highlighter, MessageCircleQuestion, PlusCircle, Puzzle, Search, Share2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CodeInput } from '../components/CodeInput'
 import { ErrorNote, Shell } from '../components/common'
@@ -192,12 +192,64 @@ export function HostHome() {
     }
   }
 
+  const heroImg = new URL(`${import.meta.env.BASE_URL}mysteries/ms-003.webp`, window.location.href).href
+  const hero = (
+    <section className="hero-noir hero-host" style={{ ['--hero-img' as string]: `url(${heroImg})` }}>
+      <div className="page page-wide hero-inner">
+        <p className="kicker">For the host</p>
+        <h1 className="hero-title">Run the Case</h1>
+        <p className="hero-sub">
+          Set up a game in seconds. Share the code, answer yes or no, and hand out the clues as your team uncovers them.
+        </p>
+        <div className="hero-actions">
+          <button
+            type="button"
+            className="btn btn-primary btn-large"
+            onClick={() => {
+              document.getElementById('setup')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              window.setTimeout(() => (document.querySelector('#setup input[type=radio]:checked') as HTMLElement | null)?.focus(), 400)
+            }}
+          >
+            Set up a game <ArrowRight size={20} aria-hidden="true" />
+          </button>
+          <a className="btn btn-large btn-ghost" href="#/admin">
+            <BookOpen size={20} aria-hidden="true" /> Open Story Editor
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+
   return (
-    <Shell wide home="#/host">
-      <div className="host-home">
+    <Shell wide home="#/host" hero={hero}>
+      <ul className="features">
+        <li>
+          <PlusCircle size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Create the game</h2>
+            <p>Choose competitive or cooperative. The 60-minute clock waits for the first case.</p>
+          </div>
+        </li>
+        <li>
+          <Share2 size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Share the code</h2>
+            <p>Paste the join link in Teams and put the Player View on screen.</p>
+          </div>
+        </li>
+        <li>
+          <Highlighter size={40} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <h2>Hand out the clues</h2>
+            <p>Tick a clue when someone uncovers it. Scores update on every screen.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div className="host-home" id="setup">
         <section className="sheet">
-          <h1>Host a game</h1>
-          <p className="lead">Pick a game and a mode. You’ll get a code to share in the Teams chat.</p>
+          <h2 className="section-title">Set up the game</h2>
+          <p className="muted">Pick a game and a mode. You’ll get a code to share in the Teams chat.</p>
           <form
             onSubmit={(e) => {
               e.preventDefault()
